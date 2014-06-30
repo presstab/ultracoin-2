@@ -38,8 +38,8 @@ static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20);
 static CBigNum bnProofOfStakeLimit(~uint256(0) >> 24);
 static CBigNum bnProofOfStakeHardLimit(~uint256(0) >> 30);
 static CBigNum bnInitialHashTarget(~uint256(0) >> 32);
-unsigned int nStakeMinAge = 60 * 60 * 24 * 365; // minimum age for coin age
-unsigned int nStakeMaxAge = 60 * 60 * 24 * 730; // stake age of full weight
+unsigned int nStakeMinAge = 60 * 60 * 24 * 7; // minimum age for coin age
+unsigned int nStakeMaxAge = 60 * 60 * 24 * 35; // stake age of full weight
 unsigned int nStakeTargetSpacing = 30; //  20 second block spacing
 int64 nChainStartTime = 1388361600;
 int nCoinbaseMaturity = 50;
@@ -1025,9 +1025,14 @@ int64 GetProofOfWorkReward( int nHeight, uint256 prevHash)
 }
 
 // ppcoin: miner's coin stake is rewarded based on coin age spent (coin-days)
-int64 GetProofOfStakeReward(int64 nCoinAge)
+int64 GetProofOfStakeReward(int64 nCoinAge, int nHeight)
 {
-    static int64 nRewardCoinYear = 20 * CENT;  // creation amount per coin-year
+    int64 nRewardCoinYear = 20 * CENT;  // creation amount per coin-year
+    if (nHeight < 449000)
+        nRewardCoinYear = 20 * CENT;
+    else if (nHeight < 100000000)
+        nRewardCoinYear = 5.2 * CENT;
+
     int64 nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * nRewardCoinYear;
     if (fDebug && GetBoolArg("-printcreation"))
         printf("GetProofOfStakeReward(): create=%s nCoinAge=%"PRI64d"\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
@@ -1410,10 +1415,11 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs,
         {
             // ppcoin: coin stake tx earns reward instead of paying fee
             uint64 nCoinAge;
+            const CBlockIndex* pIndex0 = GetLastBlockIndex(pindexBest, false);
             if (!GetCoinAge(txdb, nCoinAge))
                 return error("ConnectInputs() : %s unable to get coin age for coinstake", GetHash().ToString().substr(0,10).c_str());
             int64 nStakeReward = GetValueOut() - nValueIn;
-            if (nStakeReward > GetProofOfStakeReward(nCoinAge) - GetMinFee() + MIN_TX_FEE){
+            if (nStakeReward > GetProofOfStakeReward(nCoinAge, pIndex0->nHeight) - GetMinFee() + MIN_TX_FEE){
                 return DoS(100, error("ConnectInputs() : %s stake reward exceeded, tx: %s,\ncoin age: %"PRI64d", %"PRI64d"", GetHash().ToString().substr(0,10).c_str(),this->ToString().c_str(),nCoinAge,nStakeReward));
             }
         }

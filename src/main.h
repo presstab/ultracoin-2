@@ -23,8 +23,8 @@ class CInv;
 class CRequestTracker;
 class CNode;
 static const int POW_CUTOFF_HEIGHT = 6001000; // define last POW Block
-static const int POS_START_HEIGHT = 6000000; // add POS Switch Start Block
-static const int nConsecutiveStakeSwitchHeight = 50000000;// We want POS to be continuous after POS only implementation
+static const int POS_START_HEIGHT = 450000; // add POS Switch Start Block
+static const int nConsecutiveStakeSwitchHeight = 449000;// We want POS to be continuous after POS only implementation
 static const unsigned int MAX_BLOCK_SIZE = 1000000;
 static const unsigned int MAX_BLOCK_SIZE_GEN = MAX_BLOCK_SIZE/2;
 static const unsigned int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE/50;
@@ -110,7 +110,7 @@ void FormatHashBuffers(CBlock* pblock, char* pmidstate, char* pdata, char* phash
 bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey);
 bool CheckProofOfWork(uint256 hash, unsigned int nBits);
 int64 GetProofOfWorkReward(int nHeight, uint256 prevHash);
-int64 GetProofOfStakeReward(int64 nCoinAge);
+int64 GetProofOfStakeReward(int64 nCoinAge, int nHeight);
 unsigned int ComputeMinWork(unsigned int nBase, int64 nTime);
 int GetNumBlocksOfPeers();
 bool IsInitialBlockDownload();
