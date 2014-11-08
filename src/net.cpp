@@ -1148,13 +1148,14 @@ void MapPort()
 // Each pair gives a source name and a seed name.
 // The first name is used as information source for addrman.
 // The second name should resolve to a list of seed addresses.
-static const char *strDNSSeed[][6] = {
-    {
-	"Ultracoin.net", "82.196.2.163",
-	"pool1.tumblingblock.com", "198.27.82.163",
-	"pool3.tumblingblock.com", "192.99.8.7"
-	},
+
+static const char *strDNSSeed[][2] = {
+    { "Ultracoin.net", "82.196.2.163" },
+    { "pool1.tumblingblock.com", "dnsseed.pool1.tumblingblock.com" },
+    { "pool3.tumblingblock.com", "dnsseed.pool3.tumblingblock.com" },
+    { "ultrablockparty.com", "dnssed.ultrablockparty.com" }
 };
+
 
 void ThreadDNSAddressSeed(void* parg)
 {
@@ -1211,20 +1212,9 @@ void ThreadDNSAddressSeed2(void* parg)
     printf("%d addresses found from DNS seeds\n", found);
 }
 
-
-
-
-
-
-
-
-
-
-
-
 unsigned int pnSeed[] =
 {
-    0x90EF78BC, 0x33F1C851, 0x36F1C851, 0xC6F5C851,
+    0x070863C0,0xA3521BC6, 0x90EF78BC, 0x33F1C851, 0x36F1C851, 0xC6F5C851,
 };
 
 void DumpAddresses()
@@ -1846,18 +1836,17 @@ void StartNode(void* parg)
     // Start threads
     //
 
-/*
-    if (!GetBoolArg("-dnsseed", true))
+
+    if (GetBoolArg("-dnsseed", false))
         printf("DNS seeding disabled\n");
     else
         if (!NewThread(ThreadDNSAddressSeed, NULL))
             printf("Error: NewThread(ThreadDNSAddressSeed) failed\n");
-*/
 
-    if (!GetBoolArg("-dnsseed", false))
-        printf("DNS seeding disabled\n");
-    if (GetBoolArg("-dnsseed", false))
-        printf("DNS seeding NYI\n");
+    //if (!GetBoolArg("-dnsseed", false))
+    //    printf("DNS seeding disabled\n");
+    //if (GetBoolArg("-dnsseed", false))
+    //    printf("DNS seeding NYI\n");
 
     // Map ports with UPnP
     if (fUseUPnP)
