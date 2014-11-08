@@ -2546,7 +2546,7 @@ static unsigned int nCurrentBlockFile = 1;
 FILE* AppendBlockFile(unsigned int& nFileRet)
 {
     nFileRet = 0;
-    loop
+    for (;;)
     {
         FILE* file = OpenBlockFile(nCurrentBlockFile, 0, "ab");
         if (!file)
@@ -3676,7 +3676,7 @@ bool ProcessMessages(CNode* pfrom)
     //  (x) data
     //
 
-    loop
+    for (;;)
     {
         // Don't bother if send buffer is too full to respond anyway
         if (pfrom->vSend.size() >= SendBufferSize())
@@ -4456,16 +4456,18 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
 
     while (fGenerateBitcoins || fProofOfStake)
     {
-        if (fShutdown)
+        if (fShutdown) {
+			scrypt_buffer_free(scratchbuf);
             return;
+		}
         while (vNodes.empty() || IsInitialBlockDownload()
                || (fProofOfStake && vNodes.size() < 3 && nBestHeight < GetNumBlocksOfPeers()))
         {
             Sleep(1000);
-            if (fShutdown)
+            if (fShutdown || (!fGenerateBitcoins) && !fProofOfStake) {
+				scrypt_buffer_free(scratchbuf);
                 return;
-            if ((!fGenerateBitcoins) && !fProofOfStake)
-                return;
+			}
         }
 
         while (pwallet->IsLocked())
@@ -4482,8 +4484,10 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
         CBlockIndex* pindexPrev = pindexBest;
 
         auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
-        if (!pblock.get())
+        if (!pblock.get()) {
+			scrypt_buffer_free(scratchbuf);
             return;
+		}
         IncrementExtraNonce(pblock.get(), pindexPrev, nExtraNonce);
 
         if (fProofOfStake)
@@ -4532,7 +4536,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
         CBlockHeader res_header;
         uint256 result;
 
-        loop
+        for (;;)
         {
             unsigned int nHashesDone = 0;
             unsigned int nNonceFound;
@@ -4598,12 +4602,10 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
             }
 
             // Check for stop or if block needs to be rebuilt
-            if (fShutdown)
+            if (fShutdown || !fGenerateBitcoins || (fLimitProcessors && vnThreadsRunning[THREAD_MINER] > nLimitProcessors)) {
+                scrypt_buffer_free(scratchbuf);
                 return;
-            if (!fGenerateBitcoins)
-                return;
-            if (fLimitProcessors && vnThreadsRunning[THREAD_MINER] > nLimitProcessors)
-                return;
+            }
             if (vNodes.empty())
                 break;
             if (nBlockNonce >= 0xffff0000)

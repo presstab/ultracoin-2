@@ -100,14 +100,14 @@ void MiningPage::startPoolMining()
     QString urlLine = QString("%1:%2").arg(url, ui->portLine->text().length() == 0 ? "80" : ui->portLine->text());
     args << "--algo" << "scrypt-jane";
     if(ui->passwordLine->text().length() == 0){
-        args << "--user" << ui->usernameLine->text().toAscii();
+        args << "--user" << ui->usernameLine->text().toLatin1();
     }else{
-        args << "--userpass" << QString("%1:%2").arg(ui->usernameLine->text(), ui->passwordLine->text()).toAscii();
+        args << "--userpass" << QString("%1:%2").arg(ui->usernameLine->text(), ui->passwordLine->text()).toLatin1();
     }
-    args << "--scantime" << ui->scantimeBox->text().toAscii();
-    args << "--url" << urlLine.toAscii();
+    args << "--scantime" << ui->scantimeBox->text().toLatin1();
+    args << "--url" << urlLine.toLatin1();
 
-    args << "--threads" << ui->threadsBox->text().toAscii();
+    args << "--threads" << ui->threadsBox->text().toLatin1();
     args << "--retries" << "-1"; // Retry forever.
     args << "-P"; // This is needed for this to work correctly on Windows. Extra protocol dump helps flush the buffer quicker.
 

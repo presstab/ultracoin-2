@@ -1,9 +1,9 @@
-QT += core gui network
+QT += core gui network widgets
 TEMPLATE = app
 TARGET = ultracoin-qt
 VERSION = 0.4.2
 INCLUDEPATH += src src/json src/qt
-DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE SCRYPT_CHACHA SCRYPT_KECCAK512 #CPU_X86_FORCE_INTRINSICS __MINGW64__ BOOST_USE_WINDOWS_H
+DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE SCRYPT_CHACHA SCRYPT_KECCAK512 MINIUPNP_STATICLIB BOOST_USE_WINDOWS_H #CPU_X86_FORCE_INTRINSICS __MINGW64__ 
 CONFIG += no_include_pwd
 CONFIG += thread
 
@@ -13,20 +13,23 @@ CONFIG += thread
 # use: BOOST_THREAD_LIB_SUFFIX=_win32-...
 # or when linking against a specific BerkelyDB version: BDB_LIB_SUFFIX=-4.8
 
-#windows:LIBS += -lshlwapi
-#LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRENCODE_LIB_PATH,,-L,)
-#LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
-#windows:LIBS += -lws2_32 -lole32 -loleaut32 -luuid -lgdi32
-#LIBS += -lboost_system-mgw46-mt-sd-1_53 -lboost_filesystem-mgw46-mt-sd-1_53 -lboost_program_options-mgw46-mt-sd-1_53 -lboost_thread-mgw46-mt-sd-1_53
-#BOOST_LIB_SUFFIX=-mgw46-mt-sd-1_53
-#BOOST_INCLUDE_PATH=C:/deps/boost
-#BOOST_LIB_PATH=C:/deps/boost/stage/lib
-#BDB_INCLUDE_PATH=c:/deps/db/build_unix
-#BDB_LIB_PATH=c:/deps/db/build_unix
-#OPENSSL_INCLUDE_PATH=c:/deps/openssl-1.0.1g/include
-#OPENSSL_LIB_PATH=c:/deps/openssl-1.0.1g
-#MINIUPNPC_LIB_PATH=c:/deps/miniupnpc
-#MINIUPNPC_INCLUDE_PATH=c:/deps
+BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
+BOOST_INCLUDE_PATH="../deps/boost_1_55_0"
+BOOST_LIB_PATH="../deps/boost_1_55_0/stage/lib"
+BDB_INCLUDE_PATH="../deps/db-4.8.30.NC/build_unix"
+BDB_LIB_PATH="../deps/db-4.8.30.NC/build_unix"
+OPENSSL_INCLUDE_PATH="../deps/openssl-1.0.1j/include"
+OPENSSL_LIB_PATH="../deps/openssl-1.0.1j"
+MINIUPNPC_LIB_PATH="../deps/miniupnpc"
+MINIUPNPC_INCLUDE_PATH="../deps"
+
+windows:LIBS += -lshlwapi
+LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRENCODE_LIB_PATH,,-L,)
+LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
+LIBS += -L"../mingw32/i686-w64-mingw32/lib"
+windows:LIBS += -lws2_32 -lole32 -loleaut32 -luuid -lgdi32
+LIBS += -lboost_system-mgw49-mt-s-1_55 -lboost_chrono-mgw49-mt-s-1_55 -lboost_filesystem-mgw49-mt-s-1_55 -lboost_program_options-mgw49-mt-s-1_55 -lboost_thread-mgw49-mt-s-1_55
+
 
 # Dependency library locations can be customized with:
 #    BOOST_INCLUDE_PATH, BOOST_LIB_PATH, BDB_INCLUDE_PATH,
@@ -55,7 +58,7 @@ QMAKE_LFLAGS *= -fstack-protector-all --param ssp-buffer-size=1
 # This can be enabled for Windows, when we switch to MinGW >= 4.4.x.
 }
 # for extra security on Windows: enable ASLR and DEP via GCC linker flags
-win32:QMAKE_LFLAGS *= -Wl#,--dynamicbase -Wl,--nxcompat
+win32:QMAKE_LFLAGS *= -static #-Bstatic -Wl,--dynamicbase -Wl,--nxcompat
 
 # use: qmake "USE_QRCODE=1"
 # libqrencode (http://fukuchi.org/works/qrencode/index.en.html) must be installed for support
@@ -119,7 +122,7 @@ contains(BITCOIN_NEED_QT_PLUGINS, 1) {
 
 QMAKE_CXXFLAGS += -msse2
 QMAKE_CFLAGS += -O3 -msse2
-QMAKE_CXXFLAGS_WARN_ON = -fdiagnostics-show-option -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wstack-protector
+QMAKE_CXXFLAGS_WARN_ON = -fdiagnostics-show-option #-Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wstack-protector
 
 # Input
 DEPENDPATH += src src/json src/qt
