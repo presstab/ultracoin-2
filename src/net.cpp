@@ -1150,10 +1150,10 @@ void MapPort()
 // The second name should resolve to a list of seed addresses.
 
 static const char *strDNSSeed[][2] = {
-    { "Ultracoin.net", "82.196.2.163" },
     { "pool1.tumblingblock.com", "dnsseed.pool1.tumblingblock.com" },
     { "pool3.tumblingblock.com", "dnsseed.pool3.tumblingblock.com" },
-    { "ultrablockparty.com", "dnssed.ultrablockparty.com" }
+    { "ultrablockparty.com", "dnssed.ultrablockparty.com" },
+    { "Ultracoin.net", "82.196.2.163" }
 };
 
 
