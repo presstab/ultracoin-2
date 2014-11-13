@@ -2943,10 +2943,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         return true;
     }
 
-
-
-
-
     if (strCommand == "version")
     {
         // Each connection can only send one version message
@@ -2982,6 +2978,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             vRecv >> pfrom->fRelayTxes; // set to true after we get the first filter* message
         else
             pfrom->fRelayTxes = true;
+
+        printf("nVersion: %d addrFrom: %s Nonce: %ld nStartingHeight: %d\n",
+             pfrom->nVersion, addrFrom.ToString().c_str(), nNonce, pfrom->nStartingHeight);
 
         if (pfrom->fInbound && addrMe.IsRoutable())
         {
@@ -4457,17 +4456,17 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
     while (fGenerateBitcoins || fProofOfStake)
     {
         if (fShutdown) {
-			scrypt_buffer_free(scratchbuf);
+            scrypt_buffer_free(scratchbuf);
             return;
-		}
+        }
         while (vNodes.empty() || IsInitialBlockDownload()
                || (fProofOfStake && vNodes.size() < 3 && nBestHeight < GetNumBlocksOfPeers()))
         {
             Sleep(1000);
-            if (fShutdown || (!fGenerateBitcoins) && !fProofOfStake) {
-				scrypt_buffer_free(scratchbuf);
+            if (fShutdown || ((!fGenerateBitcoins) && !fProofOfStake)) {
+                scrypt_buffer_free(scratchbuf);
                 return;
-			}
+            }
         }
 
         while (pwallet->IsLocked())
@@ -4485,9 +4484,9 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
 
         auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
         if (!pblock.get()) {
-			scrypt_buffer_free(scratchbuf);
+            scrypt_buffer_free(scratchbuf);
             return;
-		}
+        }
         IncrementExtraNonce(pblock.get(), pindexPrev, nExtraNonce);
 
         if (fProofOfStake)
