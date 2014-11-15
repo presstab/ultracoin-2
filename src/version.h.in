@@ -4,23 +4,23 @@
 #ifndef BITCOIN_VERSION_H
 #define BITCOIN_VERSION_H
 
-#include "clientversion.h"
+#include \"clientversion.h\"
 #include <string>
 
 //
 // client versioning
 //
 
-#define DISPLAY_VERSION_MAJOR         0
-#define DISPLAY_VERSION_MINOR        7
-#define DISPLAY_VERSION_REVISION        3
-#define DISPLAY_VERSION_BUILD         3
+#define DISPLAY_VERSION_MAJOR         $$replace(GIT_VERSION, "^v(\\d+)\\.(\\d+)\\.(\\d+)-(\\d+)-(.*)$", "\\1")
+#define DISPLAY_VERSION_MINOR        $$replace(GIT_VERSION, "^v(\\d+)\\.(\\d+)\\.(\\d+)-(\\d+)-(.*)$", "\\2")
+#define DISPLAY_VERSION_REVISION        $$replace(GIT_VERSION, "^v(\\d+)\\.(\\d+)\\.(\\d+)-(\\d+)-(.*)$", "\\3")
+#define DISPLAY_VERSION_BUILD         $$replace(GIT_VERSION, "^v(\\d+)\\.(\\d+)\\.(\\d+)-(\\d+)-(.*)$", "\\4")
 
-#define APP_VERSION      "0.7.3.3"
-#define APP_VERSION_RC   0,7,3,3
-#define APP_REVISION     "36f047c"
-#define APP_NAME         "ultracoin-qt"
-#define APP_TIME         1415897210
+#define APP_VERSION      $$replace(GIT_VERSION, "^v(\\d+)\\.(\\d+)\\.(\\d+)-(\\d+)-(.*)$", "\"\\1.\\2.\\3.\\4\"")
+#define APP_VERSION_RC   $$replace(GIT_VERSION, "^v(\\d+)\\.(\\d+)\\.(\\d+)-(\\d+)-(.*)$", "\\1,\\2,\\3,\\4")
+#define APP_REVISION     $$replace(GIT_VERSION, "^v(\\d+)\\.(\\d+)\\.(\\d+)-(\\d+)-(.*)$", "\"\\5\"")
+#define APP_NAME         $$replace(TARGET, "^(.*)$", "\"\\1\"")
+#define APP_TIME         $$GIT_TIMESTAMP
 
 static const int CLIENT_VERSION =
                            1000000 * CLIENT_VERSION_MAJOR
@@ -52,7 +52,7 @@ static const int NOBLKS_VERSION_END = 70051;
 // BIP 0031, pong message, is enabled for all versions AFTER this one
 static const int BIP0031_VERSION = 60000;
 
-// mempool command, enhanced getdata behavior starts with this version:
+// "mempool" command, enhanced "getdata" behavior starts with this version:
 static const int MEMPOOL_GD_VERSION = 60002;
 
 #endif

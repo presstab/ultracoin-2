@@ -28,7 +28,7 @@
     </message>
     <message>
         <location line="+41"/>
-        <source>Copyright ? 2013 The UltraCoin developers</source>
+        <source>Copyright &#169; 2013 The UltraCoin developers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

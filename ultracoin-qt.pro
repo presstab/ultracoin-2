@@ -110,6 +110,10 @@ contains(BITCOIN_NEED_QT_PLUGINS, 1) {
 }
 
 
+GIT_VERSION = $$system($$quote(git describe))
+GIT_TIMESTAMP = $$system($$quote(git log -n 1 --format=format:"%at"))
+QMAKE_SUBSTITUTES += $$PWD/src/version.h.in
+
 # regenerate src/build.h
 !windows|contains(USE_BUILD_INFO, 1) {
     genbuild.depends = FORCE
