@@ -18,9 +18,9 @@
 
 #define APP_VERSION      "0.7.3.3"
 #define APP_VERSION_RC   0,7,3,3
-#define APP_REVISION     "36f047c"
+#define APP_REVISION     "36f047c-1-g489af95"
 #define APP_NAME         "ultracoin-qt"
-#define APP_TIME         1415897210
+#define APP_TIME         1416013303
 
 static const int CLIENT_VERSION =
                            1000000 * CLIENT_VERSION_MAJOR
@@ -54,5 +54,7 @@ static const int BIP0031_VERSION = 60000;
 
 // mempool command, enhanced getdata behavior starts with this version:
 static const int MEMPOOL_GD_VERSION = 60002;
+
+static const int DATABASE_VERSION = 70507;
 
 #endif

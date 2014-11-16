@@ -7,7 +7,7 @@
 
 #include "checkpoints.h"
 
-#include "db.h"
+#include "txdb.h"
 #include "main.h"
 #include "uint256.h"
 
@@ -30,7 +30,7 @@ namespace Checkpoints
         ( 183100, uint256("0x000000001a1e8f9d9ef3ebf1cee3e1eb81dd4c6cffe52bcda9c0f2ebdc6423c7"))
         ( 260000, uint256("0x000000007b6715ec28857da63fae6ae81c776a93926ead3eed3468f78e9fb718"))
         ( 390000, uint256("0x000000065a57cd43f39bc17c3d49ece676f7c19deefb1a83c2901032db39f10b"))
-	( 520000, uint256("0x0000002c8b9233ca857ff233170364fbebd726386ffe59cac00009fc1f87ab77"))
+        ( 520000, uint256("0x0000002c8b9233ca857ff233170364fbebd726386ffe59cac00009fc1f87ab77"))
         ( 650000, uint256("0x0000001a77d4de7de3650b64fb21bb8df94d4ef038ccec6311c24d18abba2b3d"))
         ( 780000, uint256("0x0000000eb3f648cef969fa3f685e9ee843407dc6e729d4c4b52fbd171af12dba"))
         ;
@@ -143,7 +143,10 @@ namespace Checkpoints
         }
         if (!txdb.TxnCommit())
             return error("WriteSyncCheckpoint(): failed to commit to db sync checkpoint %s", hashCheckpoint.ToString().c_str());
+
+#ifndef USE_LEVELDB
         txdb.Close();
+#endif
 
         Checkpoints::hashSyncCheckpoint = hashCheckpoint;
         return true;
@@ -174,7 +177,10 @@ namespace Checkpoints
                     return error("AcceptPendingSyncCheckpoint: SetBestChain failed for sync checkpoint %s", hashPendingCheckpoint.ToString().c_str());
                 }
             }
+
+#ifndef USE_LEVELDB
             txdb.Close();
+#endif
 
             if (!WriteSyncCheckpoint(hashPendingCheckpoint))
                 return error("AcceptPendingSyncCheckpoint(): failed to write sync checkpoint %s", hashPendingCheckpoint.ToString().c_str());
@@ -265,7 +271,10 @@ namespace Checkpoints
             {
                 return error("ResetSyncCheckpoint: SetBestChain failed for hardened checkpoint %s", hash.ToString().c_str());
             }
+
+#ifndef USE_LEVELDB
             txdb.Close();
+#endif
         }
         else if(!mapBlockIndex.count(hash))
         {
@@ -433,7 +442,9 @@ bool CSyncCheckpoint::ProcessSyncCheckpoint(CNode* pfrom)
             return error("ProcessSyncCheckpoint: SetBestChain failed for sync checkpoint %s", hashCheckpoint.ToString().c_str());
         }
     }
+#ifndef USE_LEVELDB
     txdb.Close();
+#endif
 
     if (!Checkpoints::WriteSyncCheckpoint(hashCheckpoint))
         return error("ProcessSyncCheckpoint(): failed to write sync checkpoint %s", hashCheckpoint.ToString().c_str());

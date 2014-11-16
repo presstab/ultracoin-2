@@ -4,6 +4,7 @@
 
 USE_UPNP:=1
 USE_IPV6:=1
+USE_LEVELDB:=1
 
 INCLUDEPATHS= \
  -I"C:\deps\boost_1_55_0" \
@@ -99,6 +100,21 @@ OBJS= \
 	obj/scrypt-jane.o
 
 all: ultracoind.exe
+
+#
+# LevelDB support
+#
+ifdef USE_LEVELDB
+LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+DEFS += $(addprefix -I,$(CURDIR)/leveldb/include) -DUSE_LEVELDB
+DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+OBJS += obj/txdb-leveldb.o
+leveldb/libleveldb.a:
+	cd leveldb; TARGET_OS=OS_WINDOWS_CROSSCOMPILE mingw32-make; cd ..
+obj/txdb-leveldb.o: leveldb/libleveldb.a
+else
+OBJS += obj/txdb-bdb.o
+endif
 
 test check: test_ultracoin.exe FORCE
 	test_ultracoin.exe

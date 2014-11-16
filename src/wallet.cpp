@@ -10,6 +10,7 @@
 #include "base58.h"
 #include "coincontrol.h" 
 #include "kernel.h"
+#include "txdb.h"
 
 using namespace std;
 extern int nStakeMaxAge;
