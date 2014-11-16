@@ -819,6 +819,7 @@ public:
     // memory only
      mutable bool fHashed;
      mutable uint256 hashCached;
+
     CBlockHeader()
     {
         SetNull();
@@ -862,6 +863,7 @@ public:
     uint256 GetHash() const
     {
         if (!fHashed) {
+            printf("GetHash: %ld %d %u %ul", CVOIDBEGIN(nVersion), sizeof(block_header), UINTBEGIN(hashCached), GetNfactor(nTime));
             scrypt_hash(CVOIDBEGIN(nVersion), sizeof(block_header), UINTBEGIN(hashCached), GetNfactor(nTime));
             fHashed = true;
         }
@@ -1144,7 +1146,7 @@ public:
     bool ReadFromDisk(const CBlockIndex* pindex, bool fReadTransactions=true);
     bool SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew);
     bool AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos);
-    bool CheckBlock(bool fCheckPOW=true, bool fCheckMerkleRoot=true) const;
+    bool CheckBlock(bool fCheckPOW=true, bool fCheckMerkleRoot=true, bool fCheckSig=true) const;
     bool AcceptBlock();
     bool GetCoinAge(uint64& nCoinAge) const; // ppcoin: calculate total coin age spent in block
     bool SignBlock(const CKeyStore& keystore);
