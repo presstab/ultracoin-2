@@ -355,6 +355,8 @@ bool AppInit2()
 
     // ********************************************************* Step 2: parameter interactions
 
+    fUseFastIndex = GetBoolArg("-fastindex", true);
+
     fTestNet = GetBoolArg("-testnet");
     if (fTestNet) {
         SoftSetBoolArg("-irc", true);
@@ -370,6 +372,10 @@ bool AppInit2()
         // when only connecting to trusted nodes, do not seed via DNS, or listen by default
         SoftSetBoolArg("-dnsseed", false);
         SoftSetBoolArg("-listen", false);
+    }
+    else
+    {
+        GetBoolArg("-dnsseed", true);
     }
 
     if (mapArgs.count("-proxy")) {

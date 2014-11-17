@@ -938,18 +938,16 @@ CBlockIndex* FindBlockByHeight(int nHeight)
 bool CBlock::ReadFromDisk(const CBlockIndex* pindex, bool fReadTransactions)
 {
     if (!fReadTransactions)
-        {
-            *this = pindex->GetBlockHeader();
-            return true;
-        }
-        if (!ReadFromDisk(pindex->nFile, pindex->nBlockPos, fReadTransactions))
-            return false;
-
-        uint256 cachedHash = GetHash();
-        uint256 computedHash = pindex->GetBlockHash();
-        if (cachedHash != computedHash)
-            return error("CBlock::ReadFromDisk() : GetHash() doesn't match index");
+    {
+        *this = pindex->GetBlockHeader();
         return true;
+    }
+    if (!ReadFromDisk(pindex->nFile, pindex->nBlockPos, fReadTransactions))
+        return false;
+
+    if (GetHash() != pindex->GetBlockHash())
+        return error("CBlock::ReadFromDisk() : GetHash() doesn't match index");
+    return true;
 }
 
 uint256 static GetOrphanRoot(const CBlock* pblock)
@@ -2519,7 +2517,7 @@ bool CheckDiskSpace(uint64 nAdditionalBytes)
 
 static filesystem::path BlockFilePath(unsigned int nFile)
 {
-    string strBlockFn = strprintf("blk-v1-%04u.dat", nFile);
+    string strBlockFn = strprintf("blk-v2-%04u.dat", nFile);
     return GetDataDir() / strBlockFn;
 }
 
@@ -2632,9 +2630,9 @@ bool LoadBlockIndex(bool fAllowNew)
         printf("block.hashMerkleRoot == %s\n", block.hashMerkleRoot.ToString().c_str());
         printf("block.nNonce = %u \n", block.nNonce);
         assert(block.hashMerkleRoot == uint256("0xe03a8234e63db94e44fbf9078c3f0450667c9f25407827fbf751ad75804fb7dc"));
-    block.print();
-    assert(block.GetHash() == hashGenesisBlock);
-    assert(block.CheckBlock());
+        block.print();
+        assert(block.GetHash() == hashGenesisBlock);
+        assert(block.CheckBlock());
 
         // Start new block file
         unsigned int nFile;
@@ -2647,13 +2645,6 @@ bool LoadBlockIndex(bool fAllowNew)
         // ppcoin: initialize synchronized checkpoint
         if (!Checkpoints::WriteSyncCheckpoint(hashGenesisBlock))
             return error("LoadBlockIndex() : failed to init sync checkpoint");
-
-        // upgrade time set to zero if txdb initialized
-        {
-            if (!txdb.WriteModifierUpgradeTime(0))
-                return error("LoadBlockIndex() : failed to init upgrade info");
-            printf(" Upgrade Info: ModifierUpgradeTime txdb initialization\n");
-        }
     }
 
     // ppcoin: if checkpoint master key changed must reset sync-checkpoint

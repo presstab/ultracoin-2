@@ -818,8 +818,8 @@ public:
     unsigned int nNonce;
 
     // memory only
-     mutable bool fHashed;
-     mutable uint256 hashCached;
+    mutable bool fHashed;
+    mutable uint256 hashCached;
 
     CBlockHeader()
     {
@@ -839,7 +839,7 @@ public:
 
     void SetNull()
     {
-        fHashed = false;
+        //fHashed = false;
         nVersion = CBlockHeader::CURRENT_VERSION;
         hashPrevBlock = 0;
         hashMerkleRoot = 0;
@@ -1378,6 +1378,9 @@ public:
 /** Used to marshal pointers into hashes for db storage. */
 class CDiskBlockIndex : public CBlockIndex
 {
+private:
+    uint256 blockHash;
+
 public:
     uint256 hashPrev;
     uint256 hashNext;
@@ -1387,6 +1390,7 @@ public:
         fHashed = false;
         hashPrev = 0;
         hashNext = 0;
+        blockHash = 0;
     }
 
     explicit CDiskBlockIndex(CBlockIndex* pindex) : CBlockIndex(*pindex)
@@ -1429,10 +1433,14 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+        READWRITE(blockHash);
     )
 
     uint256 GetBlockHash() const
     {
+        if (fUseFastIndex && (nTime < GetAdjustedTime() - 12 * nMaxClockDrift) && blockHash != 0)
+            return blockHash;
+
         return GetHash();
     }
 
