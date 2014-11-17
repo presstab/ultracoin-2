@@ -839,7 +839,7 @@ public:
 
     void SetNull()
     {
-        //fHashed = false;
+        fHashed = false;
         nVersion = CBlockHeader::CURRENT_VERSION;
         hashPrevBlock = 0;
         hashMerkleRoot = 0;
