@@ -24,6 +24,7 @@
 using namespace std;
 using namespace boost;
 bool fUseMemoryLog;
+bool fUseFastIndex;
 
 CWallet* pwalletMain;
 CClientUIInterface uiInterface;
