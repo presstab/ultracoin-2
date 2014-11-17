@@ -3806,6 +3806,13 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
                 pto->PushMessage("ping");
         }
 
+        // Start block sync
+        if (pto->fStartSync) {
+            pto->fStartSync = false;
+            pto->PushGetBlocks(pindexBest, uint256(0));
+        }
+
+
         // Resend wallet transactions that haven't gotten in a block yet
         ResendWalletTransactions();
 
