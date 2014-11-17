@@ -1403,8 +1403,8 @@ public:
     (
         if (!(nType & SER_GETHASH))
             READWRITE(nVersion);
-        READWRITE(hashCached);
-        SetHash(hashCached);
+        READWRITE(blockHash);
+        SetHash(blockHash);
         READWRITE(hashNext);
         READWRITE(nFile);
         READWRITE(nBlockPos);
@@ -1433,15 +1433,24 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
-        READWRITE(blockHash);
     )
 
     uint256 GetBlockHash() const
     {
-        if (fUseFastIndex && (nTime < GetAdjustedTime() - 12 * nMaxClockDrift) && blockHash != 0)
+        if (fUseFastIndex && (nTime < GetAdjustedTime() - 24 * 60 * 60) && blockHash != 0)
             return blockHash;
 
-        return GetHash();
+        CBlock block;
+        block.nVersion        = nVersion;
+        block.hashPrevBlock   = hashPrev;
+        block.hashMerkleRoot  = hashMerkleRoot;
+        block.nTime           = nTime;
+        block.nBits           = nBits;
+        block.nNonce          = nNonce;
+
+        const_cast<CDiskBlockIndex*>(this)->blockHash = block.GetHash();
+
+        return blockHash;
     }
 
 
