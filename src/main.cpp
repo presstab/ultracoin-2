@@ -2647,6 +2647,13 @@ bool LoadBlockIndex(bool fAllowNew)
         // ppcoin: initialize synchronized checkpoint
         if (!Checkpoints::WriteSyncCheckpoint(hashGenesisBlock))
             return error("LoadBlockIndex() : failed to init sync checkpoint");
+
+        // upgrade time set to zero if txdb initialized
+        {
+            if (!txdb.WriteModifierUpgradeTime(0))
+                return error("LoadBlockIndex() : failed to init upgrade info");
+            printf(" Upgrade Info: ModifierUpgradeTime txdb initialization\n");
+        }
     }
 
     // ppcoin: if checkpoint master key changed must reset sync-checkpoint
@@ -2663,6 +2670,13 @@ bool LoadBlockIndex(bool fAllowNew)
                 return error("LoadBlockIndex() : failed to commit new checkpoint master key to db");
             if ((!fTestNet) && !Checkpoints::ResetSyncCheckpoint())
                 return error("LoadBlockIndex() : failed to reset sync-checkpoint");
+        }
+
+        // upgrade time set to zero if txdb initialized
+        {
+            if (!txdb.WriteModifierUpgradeTime(0))
+                return error("LoadBlockIndex() : failed to init upgrade info");
+            printf(" Upgrade Info: ModifierUpgradeTime txdb initialization\n");
         }
 #ifndef USE_LEVELDB
         txdb.Close();
@@ -2982,8 +2996,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         else
             pfrom->fRelayTxes = true;
 
-        printf("nVersion: %d addrFrom: %s Nonce: %ld nStartingHeight: %d\n",
-             pfrom->nVersion, addrFrom.ToString().c_str(), nNonce, pfrom->nStartingHeight);
+//        printf("nVersion: %d addrFrom: %s Nonce: %ld nStartingHeight: %d\n",
+//             pfrom->nVersion, addrFrom.ToString().c_str(), nNonce, pfrom->nStartingHeight);
 
         if (pfrom->fInbound && addrMe.IsRoutable())
         {
