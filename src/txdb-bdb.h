@@ -11,7 +11,7 @@
 class CTxDB : public CDB
 {
 public:
-    CTxDB(const char* pszMode="r+") : CDB("blkindex.dat", pszMode) { }
+    CTxDB(const char* pszMode="r+") : CDB("blkindex-v1.dat", pszMode) { }
 private:
     CTxDB(const CTxDB&);
     void operator=(const CTxDB&);

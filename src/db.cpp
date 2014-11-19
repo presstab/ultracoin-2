@@ -5,9 +5,12 @@
 
 #include "db.h"
 #include "net.h"
+#include "checkpoints.h"
 #include "util.h"
 #include "main.h"
+#include "kernel.h"
 #include "ui_interface.h"
+#include <boost/version.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 
@@ -88,7 +91,7 @@ bool CDBEnv::Open(boost::filesystem::path pathEnv_)
     // dbenv.set_lk_max_locks(10000);
     dbenv.set_lk_max_locks(537000);
 
-    dbenv.set_lk_max_objects(10000);
+    dbenv.set_lk_max_objects(40000);
     dbenv.set_errfile(fopen(pathErrorFile.string().c_str(), "a")); /// debug
     dbenv.set_flags(DB_AUTO_COMMIT, 1);
     dbenv.set_flags(DB_TXN_WRITE_NOSYNC, 1);
@@ -126,9 +129,9 @@ bool CDBEnv::Open(boost::filesystem::path pathEnv_)
         if (nDeepReorg < 3)
         {
             if (nBlocks < 1)
-                strMessage = strprintf(_("Warning: DB_CONFIG has set_lk_max_locks %lu, which may be too low for a single block. If this limit is reached, NovaCoin may stop working."), (unsigned long)nMaxLocks);
+                strMessage = strprintf(_("Warning: DB_CONFIG has set_lk_max_locks %lu, which may be too low for a single block. If this limit is reached, UltraCoin may stop working."), (unsigned long)nMaxLocks);
             else
-                strMessage = strprintf(_("Warning: DB_CONFIG has set_lk_max_locks %lu, which may be too low for a common blockchain reorganization. If this limit is reached, NovaCoin may stop working."), (unsigned long)nMaxLocks);
+                strMessage = strprintf(_("Warning: DB_CONFIG has set_lk_max_locks %lu, which may be too low for a common blockchain reorganization. If this limit is reached, UltraCoin may stop working."), (unsigned long)nMaxLocks);
 
             strMiscWarning = strMessage;
             printf("*** %s\n", strMessage.c_str());
@@ -206,8 +209,17 @@ bool CDBEnv::Salvage(std::string strFile, bool fAggressive,
     int result = db.verify(strFile.c_str(), NULL, &strDump, flags);
     if (result != 0)
     {
-        printf("ERROR: db salvage failed\n");
-        return false;
+       printf("Error: Salvage found errors, all data may not be recoverable.\n");
+       if (!fAggressive)
+       {
+           printf("Error: Rerun with aggressive mode to ignore errors and continue.\n");
+           return false;
+       }
+    }
+    if (result != 0 && result != DB_VERIFY_BAD)
+    {
+       printf("Error: db salvage failed: %d\n",result);
+       return false;
     }
 
     // Format of bdb dump is ascii lines:
@@ -311,7 +323,7 @@ CDB::CDB(const char *pszFile, const char* pszMode) :
 
 static bool IsChainFile(std::string strFile)
 {
-    if (strFile == "blkindex.dat")
+    if (strFile == "blkindex-v1.dat")
         return true;
 
     return false;

@@ -2564,7 +2564,13 @@ FILE* AppendBlockFile(unsigned int& nFileRet)
 
 filesystem::path OldBlockFilePath()
 {
-    string strBlockFn = strprintf("blk%04u.dat", nCurrentBlockFile);
+    string strBlockFn = strprintf("blk-v1-%04u.dat", nCurrentBlockFile);
+    return GetDataDir() / strBlockFn;
+}
+
+filesystem::path OldBlockIndexFile()
+{
+    string strBlockFn = _("blkindex-v1.dat");
     return GetDataDir() / strBlockFn;
 }
 
@@ -3405,6 +3411,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         CInv inv(MSG_TX, tx.GetHash());
         pfrom->AddInventoryKnown(inv);
+
+        // Truncate messages to the size of the tx in them
+        unsigned int nSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
+        if (nSize < vMsg.size()){
+            vMsg.resize(nSize);
+        }
+
 
         bool fMissingInputs = false;
         if (tx.AcceptToMemoryPool(txdb, true, &fMissingInputs))

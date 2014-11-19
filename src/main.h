@@ -1440,16 +1440,7 @@ public:
         if (fUseFastIndex && (nTime < GetAdjustedTime() - 24 * 60 * 60) && blockHash != 0)
             return blockHash;
 
-        CBlock block;
-        block.nVersion        = nVersion;
-        block.hashPrevBlock   = hashPrev;
-        block.hashMerkleRoot  = hashMerkleRoot;
-        block.nTime           = nTime;
-        block.nBits           = nBits;
-        block.nNonce          = nNonce;
-
-        const_cast<CDiskBlockIndex*>(this)->blockHash = block.GetHash();
-
+        const_cast<CDiskBlockIndex*>(this)->blockHash = GetHash();
         return blockHash;
     }
 

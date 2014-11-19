@@ -24,7 +24,7 @@
 using namespace std;
 using namespace boost;
 bool fUseMemoryLog;
-bool fUseFastIndex;
+bool fUseFastIndex = true;
 
 CWallet* pwalletMain;
 CClientUIInterface uiInterface;
@@ -807,6 +807,8 @@ bool AppInit2()
 
     // ********************************************************* Step 9: import blocks
     filesystem::path oldBlock = OldBlockFilePath();
+    filesystem::path oldBlockIndex = OldBlockFilePath();
+
     if (mapArgs.count("-loadblock"))
     {
         uiInterface.InitMessage(_("Importing blockchain data file."));
@@ -823,7 +825,7 @@ bool AppInit2()
             LoadExternalBlockFile(file);
         boost::system::error_code ignored_ec;
         filesystem::remove(oldBlock,ignored_ec);
-        filesystem::remove(GetDataDir() / "blkindex.dat",ignored_ec);
+        filesystem::remove(oldBlockIndex,ignored_ec);
     }
 
     filesystem::path pathBootstrap = GetDataDir() / "bootstrap.dat";

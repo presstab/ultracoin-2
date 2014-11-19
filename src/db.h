@@ -51,7 +51,7 @@ public:
     CDBEnv();
     ~CDBEnv();
     void MakeMock();
-    bool IsMock() { return fMockDb; };
+    bool IsMock() { return fMockDb; }
 
     /*
      * Verify that database file strFile is OK. If it is not,
