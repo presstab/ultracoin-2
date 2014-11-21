@@ -18,9 +18,9 @@
 
 #define APP_VERSION      "0.7.3.3"
 #define APP_VERSION_RC   0,7,3,3
-#define APP_REVISION     "36f047c-10-gd0cc30b"
+#define APP_REVISION     "36f047c-11-gfb6f4d2"
 #define APP_NAME         "ultracoin-qt"
-#define APP_TIME         1416243204
+#define APP_TIME         1416437073
 
 static const int CLIENT_VERSION =
                            1000000 * CLIENT_VERSION_MAJOR

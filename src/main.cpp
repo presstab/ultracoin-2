@@ -969,7 +969,7 @@ uint256 WantedByOrphan(const CBlock* pblockOrphan)
 
 // ultracoin: increasing Nfactor gradually
 const unsigned char minNfactor = 4;
-const unsigned char maxNfactor = 30;
+const unsigned char maxNfactor = 14;    // Capped at 14
 
 unsigned char GetNfactor(int64 nTimestamp) {
     int l = 0;
