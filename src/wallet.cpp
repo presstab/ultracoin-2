@@ -83,7 +83,7 @@ bool CWallet::AddCScript(const CScript& redeemScript)
     return CWalletDB(strWalletFile).WriteCScript(Hash160(redeemScript), redeemScript);
 }
 
-// ppcoin: optional setting to unlock wallet for block minting only;
+// optional setting to unlock wallet for block minting only;
 //         serves to disable the trivial sendmoney when OS account compromised
 bool fWalletUnlockMintOnly = false;
 
@@ -1075,7 +1075,7 @@ static void ApproximateBestSubset(vector<pair<int64, pair<const CWalletTx*,unsig
     }
 }
 
-// ppcoin: total coins staked (non-spendable until maturity)
+// total coins staked (non-spendable until maturity)
 int64 CWallet::GetStake() const
 {
     int64 nTotal = 0;
@@ -1126,7 +1126,7 @@ bool CWallet::SelectCoinsMinConf(int64 nTargetValue, unsigned int nSpendTime, in
         int i = output.i;
 
         if (pcoin->nTime > nSpendTime)
-            continue;  // ppcoin: timestamp must not exceed spend time
+            continue;  // timestamp must not exceed spend time
 
         int64 n = pcoin->vout[i].nValue;
 
@@ -1287,7 +1287,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend, CW
                     nFeeRet += nMoveToFee;
                 }
 
-                // ppcoin: sub-cent change is moved to fee
+                // sub-cent change is moved to fee
                 if (nChange > 0 && nChange < MIN_TXOUT_AMOUNT)
                 {
                     nFeeRet += nChange;
@@ -1373,7 +1373,7 @@ bool CWallet::CreateTransaction(CScript scriptPubKey, int64 nValue, CWalletTx& w
     return CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet, coinControl);
 }
 
-// ppcoin: create coin stake transaction
+// create coin stake transaction
 bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int64 nSearchInterval, CTransaction& txNew, CKey& key)
 {
     // The following combine threshold is important to security
@@ -2105,8 +2105,8 @@ set< set<CTxDestination> > CWallet::GetAddressGroupings()
     return ret;
 }
 
-// ppcoin: check 'spent' consistency between wallet and txindex
-// ppcoin: fix wallet spent state according to txindex
+// check 'spent' consistency between wallet and txindex
+// fix wallet spent state according to txindex
 void CWallet::FixSpentCoins(int& nMismatchFound, int64& nBalanceInQuestion, bool fCheckOnly)
 {
     nMismatchFound = 0;
@@ -2155,7 +2155,7 @@ void CWallet::FixSpentCoins(int& nMismatchFound, int64& nBalanceInQuestion, bool
     }
 }
 
-// ppcoin: disable transaction (only for coinstake)
+// disable transaction (only for coinstake)
 void CWallet::DisableTransaction(const CTransaction &tx)
 {
     if (!tx.IsCoinStake() || !IsFromMe(tx))

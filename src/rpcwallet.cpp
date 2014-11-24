@@ -1447,7 +1447,7 @@ Value walletpassphrase(const Array& params, bool fHelp)
     int64* pnSleepTime = new int64(params[1].get_int64());
     NewThread(ThreadCleanWalletPassphrase, pnSleepTime);
 
-    // ppcoin: if user OS account compromised prevent trivial sendmoney commands
+    // if user OS account compromised prevent trivial sendmoney commands
     if (params.size() > 2)
         fWalletUnlockMintOnly = params[2].get_bool();
     else
@@ -1646,7 +1646,7 @@ Value validatepubkey(const Array& params, bool fHelp)
     return ret;
 }
 
-// ppcoin: reserve balance from being staked for network protection
+// reserve balance from being staked for network protection
 Value reservebalance(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 2)
@@ -1688,7 +1688,7 @@ Value reservebalance(const Array& params, bool fHelp)
 }
 
 
-// ppcoin: check wallet integrity
+// check wallet integrity
 Value checkwallet(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 0)
@@ -1711,7 +1711,7 @@ Value checkwallet(const Array& params, bool fHelp)
 }
 
 
-// ppcoin: repair wallet
+// repair wallet
 Value repairwallet(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 0)
@@ -1747,7 +1747,7 @@ Value resendtx(const Array& params, bool fHelp)
     return Value::null;
 }
 
-// ppcoin: make a public-private key pair
+// make a public-private key pair
 Value makekeypair(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 1)
