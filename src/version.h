@@ -11,16 +11,16 @@
 // client versioning
 //
 
-#define DISPLAY_VERSION_MAJOR         
-#define DISPLAY_VERSION_MINOR        
-#define DISPLAY_VERSION_REVISION        
-#define DISPLAY_VERSION_BUILD         
+#define DISPLAY_VERSION_MAJOR         v0.7.3.3
+#define DISPLAY_VERSION_MINOR        v0.7.3.3
+#define DISPLAY_VERSION_REVISION        v0.7.3.3
+#define DISPLAY_VERSION_BUILD         v0.7.3.3
 
-#define APP_VERSION      
-#define APP_VERSION_RC   
-#define APP_REVISION     
+#define APP_VERSION      v0.7.3.3
+#define APP_VERSION_RC   v0.7.3.3
+#define APP_REVISION     v0.7.3.3
 #define APP_NAME         "ultracoin-qt"
-#define APP_TIME         1416794350
+#define APP_TIME         1416853367
 
 static const int CLIENT_VERSION =
                            1000000 * CLIENT_VERSION_MAJOR
