@@ -30,6 +30,18 @@ static std::map<int, unsigned int> mapStakeModifierCheckpoints =
     ( 780000, 0x6f0c2491u )
     ;
 
+// Get time weight
+int64 GetWeight(int64 nIntervalBeginning, int64 nIntervalEnd)
+{
+    // Kernel hash weight starts from 0 at the 30-day min age
+    // this change increases active coins participating the hash and helps
+    // to secure the network when proof-of-stake difficulty is low
+    //
+    // Maximum TimeWeight is 90 days.
+
+    return min(nIntervalEnd - nIntervalBeginning - nStakeMinAge, (int64)nStakeMaxAge);
+}
+
 // Get the last stake modifier and its generation time from a given block
 static bool GetLastStakeModifier(const CBlockIndex* pindex, uint64& nStakeModifier, int64& nModifierTime)
 {
@@ -212,7 +224,7 @@ bool ComputeNextStakeModifier(const CBlockIndex* pindexPrev, uint64& nStakeModif
 
 // The stake modifier used to hash for a stake kernel is chosen as the stake
 // modifier about a selection interval later than the coin generating the kernel
-static bool GetKernelStakeModifier(uint256 hashBlockFrom, uint64& nStakeModifier, int& nStakeModifierHeight, int64& nStakeModifierTime, bool fPrintProofOfStake)
+bool GetKernelStakeModifier(uint256 hashBlockFrom, uint64& nStakeModifier, int& nStakeModifierHeight, int64& nStakeModifierTime, bool fPrintProofOfStake)
 {
     nStakeModifier = 0;
     if (!mapBlockIndex.count(hashBlockFrom))
@@ -242,6 +254,14 @@ static bool GetKernelStakeModifier(uint256 hashBlockFrom, uint64& nStakeModifier
     }
     nStakeModifier = pindex->nStakeModifier;
     return true;
+}
+
+bool GetKernelStakeModifier(uint256 hashBlockFrom, uint64& nStakeModifier)
+{
+    int nStakeModifierHeight;
+    int64 nStakeModifierTime;
+
+    return GetKernelStakeModifier(hashBlockFrom, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, false);
 }
 
 // ppcoin kernel protocol
@@ -330,6 +350,78 @@ bool CheckStakeKernelHash(unsigned int nBits, const CBlock& blockFrom, unsigned 
     }
     return true;
 }
+
+// Scan given coins set for kernel solution
+bool ScanForStakeKernelHash(MetaMap &mapMeta, KernelSearchSettings &settings, CoinsSet::value_type &kernelcoin, unsigned int &nTimeTx, unsigned int &nBlockTime)
+{
+    uint256 hashProofOfStake = 0;
+
+    // (txid, vout.n) => ((txindex, (tx, vout.n)), (block, modifier))
+    for(MetaMap::const_iterator meta_item = mapMeta.begin(); meta_item != mapMeta.end(); meta_item++)
+    {
+        if (!fCoinsDataActual)
+            break;
+
+        CTxIndex txindex = (*meta_item).second.first.first;
+        CBlock block = (*meta_item).second.second.first;
+        uint64 nStakeModifier = (*meta_item).second.second.second;
+
+        // Get coin
+        CoinsSet::value_type pcoin = meta_item->second.first.second;
+
+        static int nMaxStakeSearchInterval = 60;
+
+        // only count coins meeting min age requirement
+        if (nStakeMinAge + block.nTime > settings.nTime - nMaxStakeSearchInterval)
+            continue;
+
+        // Transaction offset inside block
+        unsigned int nTxOffset = txindex.pos.nTxPos - txindex.pos.nBlockPos;
+
+        // Current timestamp scanning interval
+        unsigned int nCurrentSearchInterval = min((int64)settings.nSearchInterval, (int64)nMaxStakeSearchInterval);
+
+        nBlockTime = block.nTime;
+        CBigNum bnTargetPerCoinDay;
+        bnTargetPerCoinDay.SetCompact(settings.nBits);
+        int64 nValueIn = pcoin.first->vout[pcoin.second].nValue;
+
+        // Search backward in time from the given timestamp 
+        // Search nSearchInterval seconds back up to nMaxStakeSearchInterval
+        // Stopping search in case of shutting down or cache invalidation
+        for (unsigned int n=0; n<nCurrentSearchInterval && fCoinsDataActual && !fShutdown; n++)
+        {
+            nTimeTx = settings.nTime - n;
+            CBigNum bnCoinDayWeight = CBigNum(nValueIn) * GetWeight((int64)pcoin.first->nTime, (int64)nTimeTx) / COIN / (24 * 60 * 60);
+            CBigNum bnTargetProofOfStake = bnCoinDayWeight * bnTargetPerCoinDay;
+
+            // Build kernel
+            CDataStream ss(SER_GETHASH, 0);
+            ss << nStakeModifier;
+            ss << nBlockTime << nTxOffset << pcoin.first->nTime << pcoin.second << nTimeTx;
+
+            // Calculate kernel hash
+            hashProofOfStake = Hash(ss.begin(), ss.end());
+
+            if (bnTargetProofOfStake >= CBigNum(hashProofOfStake))
+            {
+                if (fDebug)
+                    printf("nStakeModifier=0x%016"PRI64x", nBlockTime=%u nTxOffset=%u nTxPrevTime=%u nVout=%u nTimeTx=%u hashProofOfStake=%s Success=true\n",
+                        nStakeModifier, nBlockTime, nTxOffset, pcoin.first->nTime, pcoin.second, nTimeTx, hashProofOfStake.GetHex().c_str());
+
+                kernelcoin = pcoin;
+                return true;
+            }
+
+            if (fDebug)
+                printf("nStakeModifier=0x%016"PRI64x", nBlockTime=%u nTxOffset=%u nTxPrevTime=%u nTxNumber=%u nTimeTx=%u hashProofOfStake=%s Success=false\n",
+                    nStakeModifier, nBlockTime, nTxOffset, pcoin.first->nTime, pcoin.second, nTimeTx, hashProofOfStake.GetHex().c_str());
+        }
+    }
+
+    return false;
+}
+
 
 // Check kernel hash target and coinstake signature
 bool CheckProofOfStake(const CTransaction& tx, unsigned int nBits, uint256& hashProofOfStake)

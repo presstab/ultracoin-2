@@ -138,8 +138,13 @@ void SyncWithWallets(const CTransaction& tx, const CBlock* pblock, bool fUpdate,
         return;
     }
 
-    BOOST_FOREACH(CWallet* pwallet, setpwalletRegistered)
-        pwallet->AddToWalletIfInvolvingMe(tx, pblock, fUpdate);
+    bool involved = false;
+    BOOST_FOREACH(CWallet* pwallet, setpwalletRegistered) {
+        if (pwallet->AddToWalletIfInvolvingMe(tx, pblock, fUpdate))
+            involved = true;
+    }
+    if (involved)
+        fCoinsDataActual = false;
 }
 
 // notify wallets about a new best chain
@@ -4136,6 +4141,8 @@ CBlock* CreateNewBlock(CWallet* pwallet, bool fProofOfStake)
 
     // Create coinbase tx
     CTransaction txNew;
+    CKey key;
+
     txNew.vin.resize(1);
     txNew.vin[0].prevout.SetNull();
     txNew.vout.resize(1);
@@ -4179,7 +4186,7 @@ CBlock* CreateNewBlock(CWallet* pwallet, bool fProofOfStake)
         int64 nSearchTime = txCoinStake.nTime; // search to current time
         if (nSearchTime > nLastCoinStakeSearchTime)
         {
-            if (pwallet->CreateCoinStake(*pwallet, pblock->nBits, nSearchTime-nLastCoinStakeSearchTime, txCoinStake))
+            if (pwallet->CreateCoinStake(*pwallet, pblock->nBits, nSearchTime-nLastCoinStakeSearchTime, txCoinStake, key))
             {
                 if (txCoinStake.nTime >= max(pindexPrev->GetMedianTimePast()+1, pindexPrev->GetBlockTime() - nMaxClockDrift))
                 {   // make sure coinstake would meet timestamp protocol
