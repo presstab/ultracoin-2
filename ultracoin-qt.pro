@@ -3,9 +3,12 @@ TEMPLATE = app
 TARGET = ultracoin-qt
 VERSION = 0.4.2
 INCLUDEPATH += src src/json src/qt
-DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE SCRYPT_CHACHA SCRYPT_KECCAK512 MINIUPNP_STATICLIB BOOST_USE_WINDOWS_H #CPU_X86_FORCE_INTRINSICS __MINGW64__ 
+DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE SCRYPT_CHACHA SCRYPT_KECCAK512 MINIUPNP_STATICLIB 
+macx:DEFINES += CPU_X86_FORCE_INTRINSICS
+windows:DEFINES += __MINGW64__ BOOST_USE_WINDOWS_H
 CONFIG += no_include_pwd
 CONFIG += thread
+macx:DEPSDIR=/usr/local
 
 # for boost 1.37, add -mt to the boost libraries
 # use: qmake BOOST_LIB_SUFFIX=-mt
@@ -13,22 +16,33 @@ CONFIG += thread
 # use: BOOST_THREAD_LIB_SUFFIX=_win32-...
 # or when linking against a specific BerkelyDB version: BDB_LIB_SUFFIX=-4.8
 
-BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
-BOOST_INCLUDE_PATH="../deps/boost_1_55_0"
-BOOST_LIB_PATH="../deps/boost_1_55_0/stage/lib"
-BDB_INCLUDE_PATH="../deps/db-4.8.30.NC/build_unix"
-BDB_LIB_PATH="../deps/db-4.8.30.NC/build_unix"
-OPENSSL_INCLUDE_PATH="../deps/openssl-1.0.1j/include"
-OPENSSL_LIB_PATH="../deps/openssl-1.0.1j"
-MINIUPNPC_LIB_PATH="../deps/miniupnpc"
-MINIUPNPC_INCLUDE_PATH="../deps"
+windows:BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
+windows:BOOST_INCLUDE_PATH="../deps/boost_1_55_0"
+windows:BOOST_LIB_PATH="../deps/boost_1_55_0/stage/lib"
+windows:BDB_INCLUDE_PATH="../deps/db-4.8.30.NC/build_unix"
+windows:BDB_LIB_PATH="../deps/db-4.8.30.NC/build_unix"
+windows:OPENSSL_INCLUDE_PATH="../deps/openssl-1.0.1j/include"
+windows:OPENSSL_LIB_PATH="../deps/openssl-1.0.1j"
+windows:MINIUPNPC_LIB_PATH="../deps/miniupnpc"
+windows:MINIUPNPC_INCLUDE_PATH="../deps"
+
+macx:BOOST_LIB_SUFFIX=-mt
+macx:BOOST_INCLUDE_PATH=$$DEPSDIR/include
+macx:BOOST_LIB_PATH=$$DEPSDIR/lib
+macx:BDB_INCLUDE_PATH=$$DEPSDIR/Cellar/berkeley-db4/4.8.30/include
+macx:BDB_LIB_PATH=$$DEPSDIR/Cellar/berkeley-db4/4.8.30/lib
+macx:OPENSSL_INCLUDE_PATH=$$DEPSDIR/include"
+macx:OPENSSL_LIB_PATH=$$DEPSDIR/lib
+macx:MINIUPNPC_LIB_PATH=$$DEPSDIR/lib
+macx:MINIUPNPC_INCLUDE_PATH=$DEPSDIR/include
+
 
 windows:LIBS += -lshlwapi
 LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRENCODE_LIB_PATH,,-L,)
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
-LIBS += -L"../mingw32/i686-w64-mingw32/lib"
+windows:LIBS += -L"../mingw32/i686-w64-mingw32/lib"
 windows:LIBS += -lws2_32 -lole32 -loleaut32 -luuid -lgdi32
-LIBS += -lboost_system-mgw49-mt-s-1_55 -lboost_chrono-mgw49-mt-s-1_55 -lboost_filesystem-mgw49-mt-s-1_55 -lboost_program_options-mgw49-mt-s-1_55 -lboost_thread-mgw49-mt-s-1_55
+windows:LIBS += -lboost_system-mgw49-mt-s-1_55 -lboost_chrono-mgw49-mt-s-1_55 -lboost_filesystem-mgw49-mt-s-1_55 -lboost_program_options-mgw49-mt-s-1_55 -lboost_thread-mgw49-mt-s-1_55
 
 
 # Dependency library locations can be customized with:
@@ -152,9 +166,9 @@ QMAKE_SUBSTITUTES += $$PWD/src/version.h.in
     DEFINES += HAVE_BUILD_INFO
 }
 
-QMAKE_CXXFLAGS += -msse2
-QMAKE_CFLAGS += -O3 -msse2
-QMAKE_CXXFLAGS_WARN_ON = -fdiagnostics-show-option #-Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wstack-protector
+QMAKE_CXXFLAGS += -msse2 -Wno-deprecated
+QMAKE_CFLAGS += -O3 -msse2 -Wno-deprecated
+QMAKE_CXXFLAGS_WARN_ON = -fdiagnostics-show-option #-Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wstack-protector -Wno-deprecated
 
 # Input
 DEPENDPATH += src src/json src/qt
@@ -301,12 +315,16 @@ SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/qt/rpcconsole.cpp \
     src/noui.cpp \
     src/kernel.cpp \
-    src/scrypt-x86.S \
-    src/scrypt-x86_64.S \
     src/scrypt_mine.cpp \
     src/qt/miningpage.cpp \
     src/pbkdf2.cpp \
-    src/scrypt-jane/scrypt-jane.c
+    src/scrypt-jane/scrypt-jane.cpp
+
+!macx: {
+SOURCES += \
+    src/scrypt-x86.S \
+    src/scrypt-x86_64.S 
+}
 
 RESOURCES += \
     src/qt/bitcoin.qrc
@@ -422,7 +440,7 @@ macx:ICON = src/qt/res/icons/bitcoin.icns
 macx:TARGET = "UltraCoin-Qt"
 macx:QMAKE_CFLAGS_THREAD += -pthread
 macx:QMAKE_LFLAGS_THREAD += -pthread
-macx:QMAKE_CXXFLAGS_THREAD += -pthread
+macx:QMAKE_CXXFLAGS_THREAD += -pthread -no-integrated-as
 
 # Set libraries and includes at end, to use platform-defined defaults if not overridden
 INCLUDEPATH += $$BOOST_INCLUDE_PATH $$BDB_INCLUDE_PATH $$OPENSSL_INCLUDE_PATH $$QRENCODE_INCLUDE_PATH
