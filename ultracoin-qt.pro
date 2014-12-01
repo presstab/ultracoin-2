@@ -125,7 +125,7 @@ contains(BITCOIN_NEED_QT_PLUGINS, 1) {
 
 contains(USE_LEVELDB, 1) {
     message(Building with LevelDB transaction index)
-    DEFINES += USE_LEVELDB
+    DEFINES += USE_LEVELDB=1
 
     INCLUDEPATH += src/leveldb/include src/leveldb/helpers
     LIBS += $$PWD/src/leveldb/libleveldb.a $$PWD/src/leveldb/libmemenv.a
@@ -436,7 +436,7 @@ macx:HEADERS += src/qt/macdockiconhandler.h
 macx:OBJECTIVE_SOURCES += src/qt/macdockiconhandler.mm
 macx:LIBS += -framework Foundation -framework ApplicationServices -framework AppKit
 macx:DEFINES += MAC_OSX MSG_NOSIGNAL=0
-macx:ICON = src/qt/res/icons/bitcoin.icns
+macx:ICON = src/qt/res/icons/ultracoin.icns
 macx:TARGET = "UltraCoin-Qt"
 macx:QMAKE_CFLAGS_THREAD += -pthread
 macx:QMAKE_LFLAGS_THREAD += -pthread
