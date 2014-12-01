@@ -30,9 +30,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <xmmintrin.h>
-extern "C" {
 #include "scrypt-jane/scrypt-jane.h"
-}
 #include "main.h"
 #include "scrypt_mine.h"
 #include "pbkdf2.h"

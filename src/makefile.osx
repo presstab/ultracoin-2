@@ -7,17 +7,17 @@
 # Originally by Laszlo Hanyecz (solar@heliacal.net)
 
 CXX=llvm-g++
-DEPSDIR=/opt/local
+DEPSDIR=/usr/local
 
 INCLUDEPATHS= \
  -I"$(CURDIR)" \
  -I"$(CURDIR)"/obj \
  -I"$(DEPSDIR)/include" \
- -I"$(DEPSDIR)/include/db48"
+ -I"$(DEPSDIR)/Cellar/berkeley-db4/4.8.30/include"
 
 LIBPATHS= \
  -L"$(DEPSDIR)/lib" \
- -L"$(DEPSDIR)/lib/db48"
+ -L"$(DEPSDIR)/Cellar/berkeley-db4/4.8.30/lib"
 
 USE_UPNP:=1
 USE_IPV6:=1
@@ -31,7 +31,7 @@ ifdef STATIC
 TESTLIBS += \
  $(DEPSDIR)/lib/libboost_unit_test_framework-mt.a
 LIBS += \
- $(DEPSDIR)/lib/db48/libdb_cxx-4.8.a \
+ $(DEPSDIR)/lib/Cellar/berkeley=db4/4.8.30/lib/libdb_cxx-4.8.a \
  $(DEPSDIR)/lib/libboost_system-mt.a \
  $(DEPSDIR)/lib/libboost_filesystem-mt.a \
  $(DEPSDIR)/lib/libboost_program_options-mt.a \
@@ -54,7 +54,7 @@ LIBS += \
 TESTDEFS += -DBOOST_TEST_DYN_LINK
 endif
 
-DEFS=-DMAC_OSX -DMSG_NOSIGNAL=0 -DBOOST_SPIRIT_THREADSAFE
+DEFS=-DMAC_OSX -DCPU_X86_FORCE_INTRINSICS -DMSG_NOSIGNAL=0 -DBOOST_SPIRIT_THREADSAFE
 
 ifdef RELEASE
 # Compile for maximum compatibility and smallest size.
@@ -67,12 +67,12 @@ endif
 # scrypt-jane specific parameters
 DEFS+=-DSCRYPT_KECCAK512 -DSCRYPT_CHACHA #-DSCRYPT_CHOOSE_COMPILETIME -fPIC
 
-xCXXFLAGS_SCRYPT_JANE=-O3 -arch x86_64 -msse2 -pthread -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -no-integrated-as \
+xCXXFLAGS_SCRYPT_JANE=-O3 -arch x86_64 -msse2 -pthread -Wextra -Wformat -Wformat-security -Wno-unused-parameter -no-integrated-as \
     $(DEBUGFLAGS) $(DEFS) $(HARDENING) $(CXXFLAGS)
  
 # ppc doesn't work because we don't support big-endian
-CFLAGS += -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter \
-    $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
+CFLAGS += -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wno-deprecated \
+	$(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
 
 OBJS= \
     obj/alert.o \
@@ -106,9 +106,7 @@ OBJS= \
     obj/pbkdf2.o \
     obj/kernel.o \
     obj/scrypt-jane.o \
-    obj/scrypt_mine.o \
-    obj/scrypt-x86.o \
-    obj/scrypt-x86_64.o
+    obj/scrypt_mine.o
 
 ifndef USE_UPNP
 	override USE_UPNP = -
@@ -127,6 +125,22 @@ ifneq (${USE_IPV6}, -)
 endif
 
 all: ultracoind
+
+#
+# LevelDB support
+#
+ifdef USE_LEVELDB
+LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+DEFS += $(addprefix -I,$(CURDIR)/leveldb/include) -DUSE_LEVELDB
+DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+OBJS += obj/txdb-leveldb.o
+leveldb/libleveldb.a:
+        @echo "Building LevelDB ..." && cd leveldb && $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(xCXXFLAGS)" libleveldb.a libmemenv.a && cd ..
+obj/txdb-leveldb.o: leveldb/libleveldb.a
+else
+OBJS += obj/txdb-bdb.o
+endif
+
 
 test check: test_ultracoin FORCE
 	./test_ultracoin
@@ -153,7 +167,7 @@ obj/scrypt-x86.o: scrypt-x86.S
 obj/scrypt-x86_64.o: scrypt-x86_64.S
 	$(CXX) -c -no-integrated-as $(xCXXFLAGS) -MMD -o $@ $<
 
-obj/scrypt-jane.o: scrypt-jane/scrypt-jane.c
+obj/scrypt-jane.o: scrypt-jane/scrypt-jane.cpp
 	$(CXX) -c $(xCXXFLAGS_SCRYPT_JANE) -MMD -o $@ $<
 
 ultracoind: $(OBJS:obj/%=obj/%)
