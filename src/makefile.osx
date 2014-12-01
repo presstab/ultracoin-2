@@ -54,7 +54,7 @@ LIBS += \
 TESTDEFS += -DBOOST_TEST_DYN_LINK
 endif
 
-DEFS=-DMAC_OSX -DCPU_X86_FORCE_INTRINSICS -DMSG_NOSIGNAL=0 -DBOOST_SPIRIT_THREADSAFE
+DEFS=-DMAC_OSX -DMSG_NOSIGNAL=0 -DBOOST_SPIRIT_THREADSAFE
 
 ifdef RELEASE
 # Compile for maximum compatibility and smallest size.
@@ -67,7 +67,7 @@ endif
 # scrypt-jane specific parameters
 DEFS+=-DSCRYPT_KECCAK512 -DSCRYPT_CHACHA #-DSCRYPT_CHOOSE_COMPILETIME -fPIC
 
-xCXXFLAGS_SCRYPT_JANE=-O3 -arch x86_64 -msse2 -pthread -Wextra -Wformat -Wformat-security -Wno-unused-parameter -no-integrated-as \
+xCXXFLAGS_SCRYPT_JANE=-arch x86_64 -msse2 -pthread -Wextra -Wformat -Wformat-security -Wno-unused-parameter -no-integrated-as \
     $(DEBUGFLAGS) $(DEFS) $(HARDENING) $(CXXFLAGS)
  
 # ppc doesn't work because we don't support big-endian
@@ -167,8 +167,8 @@ obj/scrypt-x86.o: scrypt-x86.S
 obj/scrypt-x86_64.o: scrypt-x86_64.S
 	$(CXX) -c -no-integrated-as $(xCXXFLAGS) -MMD -o $@ $<
 
-obj/scrypt-jane.o: scrypt-jane/scrypt-jane.cpp
-	$(CXX) -c $(xCXXFLAGS_SCRYPT_JANE) -MMD -o $@ $<
+obj/scrypt-jane.o: scrypt-jane/scrypt-jane.c
+	$(CC) -c $(xCXXFLAGS_SCRYPT_JANE) -o $@ $<
 
 ultracoind: $(OBJS:obj/%=obj/%)
 	$(CXX) $(CFLAGS) -v -o $@ $(LIBPATHS) $^ $(LIBS)

@@ -52,10 +52,8 @@ asm_naked_fn(scrypt_ChunkMix_sse2)
 		a1(scrypt_chacha_sse2_loop: )
 			a2(paddd xmm0,xmm1)
 			a2(pxor  xmm3,xmm0)
-			a2(movdqa xmm6,xmm3)
-			a2(pslld xmm3,16)
-			a2(psrld xmm6,16)
-			a2(pxor  xmm3,xmm6)
+			a3(pshuflw xmm3,xmm3,0xb1)
+			a3(pshufhw xmm3,xmm3,0xb1)
 			a2(paddd xmm2,xmm3)
 			a2(pxor  xmm1,xmm2)
 			a2(movdqa xmm6,xmm1)
@@ -80,10 +78,8 @@ asm_naked_fn(scrypt_ChunkMix_sse2)
 			a2(sub eax,2)
 			a2(paddd xmm0,xmm1)
 			a2(pxor  xmm3,xmm0)
-			a2(movdqa xmm6,xmm3)
-			a2(pslld xmm3,16)
-			a2(psrld xmm6,16)
-			a2(pxor  xmm3,xmm6)
+			a3(pshuflw xmm3,xmm3,0xb1)
+			a3(pshufhw xmm3,xmm3,0xb1)
 			a2(paddd xmm2,xmm3)
 			a2(pxor  xmm1,xmm2)
 			a2(movdqa xmm6,xmm1)
@@ -142,7 +138,7 @@ asm_naked_fn_end(scrypt_ChunkMix_sse2)
 
 asm_naked_fn_proto(void, scrypt_ChunkMix_sse2)(uint32_t *Bout/*[chunkBytes]*/, uint32_t *Bin/*[chunkBytes]*/, uint32_t *Bxor/*[chunkBytes]*/, uint32_t r)
 asm_naked_fn(scrypt_ChunkMix_sse2)
-	a2(lea rcx,[rcx*2])
+	a2(lea rcx,[ecx*2]) /* zero extend uint32_t by using ecx, win64 can leave garbage in the top half */
 	a2(shl rcx,6)
 	a2(lea r9,[rcx-64])
 	a2(lea rax,[rsi+r9])
@@ -180,10 +176,8 @@ asm_naked_fn(scrypt_ChunkMix_sse2)
 		a1(scrypt_chacha_sse2_loop: )
 			a2(paddd xmm0,xmm1)
 			a2(pxor  xmm3,xmm0)
-			a2(movdqa xmm6,xmm3)
-			a2(pslld xmm3,16)
-			a2(psrld xmm6,16)
-			a2(pxor  xmm3,xmm6)
+			a3(pshuflw xmm3,xmm3,0xb1)
+			a3(pshufhw xmm3,xmm3,0xb1)
 			a2(paddd xmm2,xmm3)
 			a2(pxor  xmm1,xmm2)
 			a2(movdqa xmm6,xmm1)
@@ -208,10 +202,8 @@ asm_naked_fn(scrypt_ChunkMix_sse2)
 			a2(sub rax,2)
 			a2(paddd xmm0,xmm1)
 			a2(pxor  xmm3,xmm0)
-			a2(movdqa xmm6,xmm3)
-			a2(pslld xmm3,16)
-			a2(psrld xmm6,16)
-			a2(pxor  xmm3,xmm6)
+			a3(pshuflw xmm3,xmm3,0xb1)
+			a3(pshufhw xmm3,xmm3,0xb1)
 			a2(paddd xmm2,xmm3)
 			a2(pxor  xmm1,xmm2)
 			a2(movdqa xmm6,xmm1)
@@ -308,7 +300,7 @@ scrypt_ChunkMix_sse2(uint32_t *Bout/*[chunkBytes]*/, uint32_t *Bin/*[chunkBytes]
 			x0 = _mm_add_epi32(x0, x1);
 			x3 = _mm_xor_si128(x3, x0);
 			x4 = x3;
-			x3 = _mm_or_si128(_mm_slli_epi32(x3, 16), _mm_srli_epi32(x4, 16));
+			x3 = _mm_shufflehi_epi16(_mm_shufflelo_epi16(x3, 0xb1), 0xb1);
 			x2 = _mm_add_epi32(x2, x3);
 			x1 = _mm_xor_si128(x1, x2);
 			x4 = x1;
@@ -327,7 +319,7 @@ scrypt_ChunkMix_sse2(uint32_t *Bout/*[chunkBytes]*/, uint32_t *Bin/*[chunkBytes]
 			x0 = _mm_add_epi32(x0, x1);
 			x3 = _mm_xor_si128(x3, x0);
 			x4 = x3;
-			x3 = _mm_or_si128(_mm_slli_epi32(x3, 16), _mm_srli_epi32(x4, 16));
+			x3 = _mm_shufflehi_epi16(_mm_shufflelo_epi16(x3, 0xb1), 0xb1);
 			x2 = _mm_add_epi32(x2, x3);
 			x1 = _mm_xor_si128(x1, x2);
 			x4 = x1;

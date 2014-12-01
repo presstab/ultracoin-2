@@ -4,7 +4,7 @@ TARGET = ultracoin-qt
 VERSION = 0.4.2
 INCLUDEPATH += src src/json src/qt
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE SCRYPT_CHACHA SCRYPT_KECCAK512 MINIUPNP_STATICLIB 
-macx:DEFINES += CPU_X86_FORCE_INTRINSICS
+macx:DEFINES += MAC_OSX
 windows:DEFINES += __MINGW64__ BOOST_USE_WINDOWS_H
 CONFIG += no_include_pwd
 CONFIG += thread
@@ -318,7 +318,7 @@ SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/scrypt_mine.cpp \
     src/qt/miningpage.cpp \
     src/pbkdf2.cpp \
-    src/scrypt-jane/scrypt-jane.cpp
+    src/scrypt-jane/scrypt-jane.c
 
 !macx: {
 SOURCES += \
