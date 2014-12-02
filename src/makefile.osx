@@ -62,12 +62,12 @@ ifdef RELEASE
 # the same way.
 CFLAGS = -mmacosx-version-min=10.5 -arch x86_64 -O3 -msse2 
 else
-CFLAGS = -g -msse2 
+CFLAGS = -march=native -arch x86_64 -O2
 endif
 # scrypt-jane specific parameters
 DEFS+=-DSCRYPT_KECCAK512 -DSCRYPT_CHACHA #-DSCRYPT_CHOOSE_COMPILETIME -fPIC
 
-xCXXFLAGS_SCRYPT_JANE=-arch x86_64 -msse2 -pthread -Wextra -Wformat -Wformat-security -Wno-unused-parameter -no-integrated-as \
+xCXXFLAGS_SCRYPT_JANE=-msse2 -msse3 -msse4.1 -pthread -Wextra -Wformat -Wformat-security -Wno-unused-parameter -no-integrated-as \
     $(DEBUGFLAGS) $(DEFS) $(HARDENING) $(CXXFLAGS)
  
 # ppc doesn't work because we don't support big-endian
