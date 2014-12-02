@@ -9,6 +9,8 @@ windows:DEFINES += __MINGW64__ BOOST_USE_WINDOWS_H
 CONFIG += no_include_pwd
 CONFIG += thread
 macx:DEPSDIR=/usr/local
+QMAKE_LFLAGS=-static
+USE_LEVELDB=1
 
 # for boost 1.37, add -mt to the boost libraries
 # use: qmake BOOST_LIB_SUFFIX=-mt
@@ -16,15 +18,15 @@ macx:DEPSDIR=/usr/local
 # use: BOOST_THREAD_LIB_SUFFIX=_win32-...
 # or when linking against a specific BerkelyDB version: BDB_LIB_SUFFIX=-4.8
 
-windows:BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
-windows:BOOST_INCLUDE_PATH="../deps/boost_1_55_0"
-windows:BOOST_LIB_PATH="../deps/boost_1_55_0/stage/lib"
-windows:BDB_INCLUDE_PATH="../deps/db-4.8.30.NC/build_unix"
-windows:BDB_LIB_PATH="../deps/db-4.8.30.NC/build_unix"
-windows:OPENSSL_INCLUDE_PATH="../deps/openssl-1.0.1j/include"
-windows:OPENSSL_LIB_PATH="../deps/openssl-1.0.1j"
-windows:MINIUPNPC_LIB_PATH="../deps/miniupnpc"
-windows:MINIUPNPC_INCLUDE_PATH="../deps"
+win32:BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
+win32:BOOST_INCLUDE_PATH="../deps/boost_1_55_0"
+win32:BOOST_LIB_PATH="../deps/boost_1_55_0/stage/lib"
+win32:BDB_INCLUDE_PATH="../deps/db-4.8.30.NC/build_unix"
+win32:BDB_LIB_PATH="../deps/db-4.8.30.NC/build_unix"
+win32:OPENSSL_INCLUDE_PATH="../deps/openssl-1.0.1j/include"
+win32:OPENSSL_LIB_PATH="../deps/openssl-1.0.1j"
+win32:MINIUPNPC_LIB_PATH="../deps/miniupnpc"
+win32:MINIUPNPC_INCLUDE_PATH="../deps"
 
 macx:BOOST_LIB_SUFFIX=-mt
 macx:BOOST_INCLUDE_PATH=$$DEPSDIR/include
@@ -37,12 +39,12 @@ macx:MINIUPNPC_LIB_PATH=$$DEPSDIR/lib
 macx:MINIUPNPC_INCLUDE_PATH=$DEPSDIR/include
 
 
-windows:LIBS += -lshlwapi
+win32:LIBS += -lshlwapi
 LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRENCODE_LIB_PATH,,-L,)
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
-windows:LIBS += -L"../mingw32/i686-w64-mingw32/lib"
-windows:LIBS += -lws2_32 -lole32 -loleaut32 -luuid -lgdi32
-windows:LIBS += -lboost_system-mgw49-mt-s-1_55 -lboost_chrono-mgw49-mt-s-1_55 -lboost_filesystem-mgw49-mt-s-1_55 -lboost_program_options-mgw49-mt-s-1_55 -lboost_thread-mgw49-mt-s-1_55
+win32:LIBS += -L"../mingw32/i686-w64-mingw32/lib"
+win32:LIBS += -lws2_32 -lole32 -loleaut32 -luuid -lgdi32
+win32:LIBS += -lboost_system-mgw49-mt-s-1_55 -lboost_chrono-mgw49-mt-s-1_55 -lboost_filesystem-mgw49-mt-s-1_55 -lboost_program_options-mgw49-mt-s-1_55 -lboost_thread-mgw49-mt-s-1_55
 
 
 # Dependency library locations can be customized with:
