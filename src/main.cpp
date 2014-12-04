@@ -1045,7 +1045,7 @@ int64 GetProofOfStakeReward(int64 nCoinAge, int nHeight)
 //  TimeWarp additions
 //  keeps close with UTC original 200% per 30 mins (240% in 3 minutes)
 
-static const int64 nBlockTimeWarpPreventStart = 918958;  // Approx 1/22/15 8AM UTC
+static const int64 nBlockTimeWarpPreventStart = 855838; // emergency time skew fix 
 static const int64 nTargetTimespan = 30 * 60;  // 6 hours (30mins now)
 static const int64 nTargetSpacingWorkMax = 12 * nStakeTargetSpacing; // 2-hour
 static const int64 nTargetSpacing = 30; //  (30 seconds)
@@ -1135,10 +1135,10 @@ unsigned int static GetNextTargetRequired(const CBlockIndex* pindexLast, const C
         bnNew /= nTargetTimespan;
 
         /// debug print
-        printf("GetNextWorkRequired (legacy) RETARGET\n");
-        printf("nTargetTimespan = %"PRI64d"    nActualTimespan = %"PRI64d"\n", nTargetTimespan, nActualTimespan);
-        printf("Before: %08x  %s\n", pindexLast->nBits, CBigNum().SetCompact(pindexLast->nBits).getuint256().ToString().c_str());
-        printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
+        //printf("GetNextWorkRequired  RETARGET\n");
+        //printf("nTargetTimespan = %"PRI64d"    nActualTimespan = %"PRI64d"\n", nTargetTimespan, nActualTimespan);
+        //printf("Before: %08x  %s\n", pindexLast->nBits, CBigNum().SetCompact(pindexLast->nBits).getuint256().ToString().c_str());
+        //printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
     }
     else // Original 2 block exponential retarget
     {
