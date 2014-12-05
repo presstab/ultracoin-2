@@ -9,7 +9,7 @@ windows:DEFINES += __MINGW64__ BOOST_USE_WINDOWS_H
 CONFIG += no_include_pwd
 CONFIG += thread
 macx:DEPSDIR=/usr/local
-QMAKE_LFLAGS=-static
+!macx:QMAKE_LFLAGS=-static
 USE_LEVELDB=1
 
 # for boost 1.37, add -mt to the boost libraries
@@ -38,15 +38,6 @@ macx:OPENSSL_LIB_PATH=$$DEPSDIR/lib
 macx:MINIUPNPC_LIB_PATH=$$DEPSDIR/lib
 macx:MINIUPNPC_INCLUDE_PATH=$DEPSDIR/include
 
-
-win32:LIBS += -lshlwapi
-LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRENCODE_LIB_PATH,,-L,)
-LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
-win32:LIBS += -L"../mingw32/i686-w64-mingw32/lib"
-win32:LIBS += -lws2_32 -lole32 -loleaut32 -luuid -lgdi32
-win32:LIBS += -lboost_system-mgw49-mt-s-1_55 -lboost_chrono-mgw49-mt-s-1_55 -lboost_filesystem-mgw49-mt-s-1_55 -lboost_program_options-mgw49-mt-s-1_55 -lboost_thread-mgw49-mt-s-1_55
-
-
 # Dependency library locations can be customized with:
 #    BOOST_INCLUDE_PATH, BOOST_LIB_PATH, BDB_INCLUDE_PATH,
 #    BDB_LIB_PATH, OPENSSL_INCLUDE_PATH and OPENSSL_LIB_PATH respectively
@@ -70,6 +61,7 @@ contains(RELEASE, 1) {
 # for extra security against potential buffer overflows: enable GCCs Stack Smashing Protection
 QMAKE_CXXFLAGS *= -fstack-protector-all --param ssp-buffer-size=1
 QMAKE_LFLAGS *= -fstack-protector-all --param ssp-buffer-size=1
+
 # We need to exclude this for Windows cross compile with MinGW 4.2.x, as it will result in a non-working executable!
 # This can be enabled for Windows, when we switch to MinGW >= 4.4.x.
 }
@@ -88,7 +80,7 @@ contains(USE_QRCODE, 1) {
 #  or: qmake "USE_UPNP=0" (disabled by default)
 #  or: qmake "USE_UPNP=-" (not supported)
 # miniupnpc (http://miniupnp.free.fr/files/) must be installed for support
-contains(USE_UPNP, -) {
+contains(USE_UPNP, 1) {
     message(Building without UPNP support)
 } else {
     message(Building with UPNP support)
@@ -168,8 +160,9 @@ QMAKE_SUBSTITUTES += $$PWD/src/version.h.in
     DEFINES += HAVE_BUILD_INFO
 }
 
-QMAKE_CXXFLAGS += -msse2 -Wno-deprecated
-QMAKE_CFLAGS += -O3 -msse2 -Wno-deprecated
+QMAKE_CXXFLAGS += -O2 -Wno-deprecated
+QMAKE_CFLAGS += -O3 -Wno-deprecated 
+macx: QMAKE_CFLAGS += -no-integrated-as
 QMAKE_CXXFLAGS_WARN_ON = -fdiagnostics-show-option #-Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wstack-protector -Wno-deprecated
 
 # Input
@@ -190,7 +183,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/addrman.h \
     src/base58.h \
     src/bignum.h \
-	src/bloom.h \
+    src/bloom.h \
     src/checkpoints.h \
     src/coincontrol.h \
     src/compat.h \
@@ -433,6 +426,10 @@ windows:!contains(MINGW_THREAD_BUGFIX, 0) {
     DEFINES += LINUX
     LIBS += -lrt
 }
+
+
+win32:LIBS += -lshlwapi
+win32:LIBS += -L"../mingw32/i686-w64-mingw32/lib"
 
 macx:HEADERS += src/qt/macdockiconhandler.h
 macx:OBJECTIVE_SOURCES += src/qt/macdockiconhandler.mm

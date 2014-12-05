@@ -18,9 +18,9 @@
 
 #define APP_VERSION      "0.7.3.3"
 #define APP_VERSION_RC   0,7,3,3
-#define APP_REVISION     "10-g9d27fea"
-#define APP_NAME         "ultracoin-qt"
-#define APP_TIME         1417537125
+#define APP_REVISION     "13-gab29126"
+#define APP_NAME         "UltraCoin-Qt"
+#define APP_TIME         1417678429
 
 static const int CLIENT_VERSION =
                            1000000 * CLIENT_VERSION_MAJOR
@@ -39,7 +39,7 @@ extern const std::string CLIENT_DATE;
 static const int PROTOCOL_VERSION = 70055;
 
 // earlier versions not supported as of Feb 2012, and are disconnected
-static const int MIN_PROTO_VERSION = 70051;
+static const int MIN_PROTO_VERSION = 70050;
 
 // nTime field added to CAddress, starting with this version;
 // if possible, avoid requesting addresses nodes older than this
