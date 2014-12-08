@@ -18,6 +18,8 @@
 #include <QScrollBar>
 #include <QClipboard>
 
+extern bool fWalletUnlockMintOnly;
+
 SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SendCoinsDialog),
@@ -115,6 +117,13 @@ void SendCoinsDialog::on_sendButton_clicked()
 
     if(!model)
         return;
+
+    if (fWalletUnlockMintOnly) {        
+        QMessageBox::warning(this, tr("Wallet in staking mode"),
+            tr("Please turn off stake minting before attempting to send coins."),
+            QMessageBox::Ok, QMessageBox::Ok);
+        return;
+    }
 
     for(int i = 0; i < ui->entries->count(); ++i)
     {
