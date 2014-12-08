@@ -18,9 +18,9 @@
 
 #define APP_VERSION      "0.7.3.3"
 #define APP_VERSION_RC   0,7,3,3
-#define APP_REVISION     "13-gab29126"
-#define APP_NAME         "UltraCoin-Qt"
-#define APP_TIME         1417678429
+#define APP_REVISION     "14-g5aea029"
+#define APP_NAME         "ultracoin-qt"
+#define APP_TIME         1417748126
 
 static const int CLIENT_VERSION =
                            1000000 * CLIENT_VERSION_MAJOR
@@ -36,7 +36,7 @@ extern const std::string CLIENT_DATE;
 // network protocol versioning
 //
 
-static const int PROTOCOL_VERSION = 70055;
+static const int PROTOCOL_VERSION = 70056;
 
 // earlier versions not supported as of Feb 2012, and are disconnected
 static const int MIN_PROTO_VERSION = 70050;
@@ -47,7 +47,7 @@ static const int CADDR_TIME_VERSION = 31402;
 
 // only request blocks from nodes outside this range of versions
 static const int NOBLKS_VERSION_START = 60000;
-static const int NOBLKS_VERSION_END = 70054;
+static const int NOBLKS_VERSION_END = 70055;
 
 // BIP 0031, pong message, is enabled for all versions AFTER this one
 static const int BIP0031_VERSION = 60000;
