@@ -1000,32 +1000,36 @@ unsigned char GetNfactor(int64 nTimestamp) {
 // miner's coin base reward based on nBits and nTime
 int64 GetProofOfWorkReward( int nHeight, uint256 prevHash)
 {
-        int64 nSubsidy = 50 * COIN;
-        if(nHeight == 0)
-        {
-           nSubsidy = 1 * COIN;
-        }
-        else if (nHeight < 2)
-        {
-           nSubsidy = 2000000 * COIN;
+    int64 nSubsidy = 50 * COIN;
+    if(nHeight == 0)
+    {
+        nSubsidy = 1 * COIN;
     }
-     else if (nHeight < 240000)
+    else if (nHeight < 2)
     {
-            nSubsidy = 50 * COIN;
-         }
-         else if (nHeight < 4000000)
+        nSubsidy = 2000000 * COIN;
+    }
+    else if (nHeight < 240000)
     {
-            nSubsidy = 30 * COIN;
-         }
-         else if (nHeight < 6000000)
+        nSubsidy = 50 * COIN;
+    }
+    else if (nHeight < 860600)
     {
-            nSubsidy = 15 * COIN;
-         }
-         else if (nHeight < 30000000)
+        nSubsidy = 15 * COIN;
+    }
+    else if (nHeight < 4000000)
     {
-           nSubsidy = 2 * COIN;
-        }
-        return nSubsidy;
+        nSubsidy = 30 * COIN;
+    }
+    else if (nHeight < 6000000)
+    {
+        nSubsidy = 15 * COIN;
+    }
+    else if (nHeight < 30000000)
+    {
+        nSubsidy = 2 * COIN;
+    }
+    return nSubsidy;
 }
 
 // miner's coin stake is rewarded based on coin age spent (coin-days)
