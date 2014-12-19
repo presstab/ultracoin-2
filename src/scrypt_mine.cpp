@@ -29,7 +29,9 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#ifndef __arm__
 #include <xmmintrin.h>
+#endif
 extern "C" {
 #include "scrypt-jane/scrypt-jane.h"
 }
@@ -65,6 +67,12 @@ extern "C" void scrypt_core_3way(uint32_t *X, uint32_t *Y, uint32_t *Z, uint32_t
 
 extern  "C" void scrypt_core(uint32_t *X, uint32_t *V);
 
+#elif defined(__arm__)
+
+#define SCRYPT_BUFFER_SIZE (131072 + 63)
+
+extern "C" void scrypt_core(uint32_t *X, uint32_t *V);
+
 #endif
 
 void *scrypt_buffer_alloc() {
@@ -81,6 +89,7 @@ void scrypt_buffer_free(void *scratchpad)
    r = 1, p = 1, N = 1024
  */
 
+//#if defined(__x86_64__) || defined(__i386__)
 static void scrypt(const void* input, size_t inputlen, uint32_t *res, void *scratchpad)
 {
     uint32_t *V;
@@ -93,6 +102,7 @@ static void scrypt(const void* input, size_t inputlen, uint32_t *res, void *scra
 
     PBKDF2_SHA256((const uint8_t*)input, inputlen, (uint8_t *)X, 128, 1, (uint8_t*)res, 32);
 }
+//#endif
 
 void scrypt_hash(const void* input, size_t inputlen, uint32_t *res, unsigned char Nfactor)
 {

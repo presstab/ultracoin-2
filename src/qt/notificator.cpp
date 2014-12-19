@@ -16,9 +16,10 @@
 #include <stdint.h>
 #endif
 
-#ifdef Q_OS_MAC
+#if defined(Q_OS_MAC) && QT_VERSION < 0x050400
 #include <ApplicationServices/ApplicationServices.h>
 extern bool qt_mac_execute_apple_script(const QString &script, AEDesc *ret);
+#include "macnotificationhandler.h"
 #endif
 
 // https://wiki.ubuntu.com/NotificationDevelopmentGuidelines recommends at least 128
@@ -46,7 +47,7 @@ Notificator::Notificator(const QString &programName, QSystemTrayIcon *trayicon, 
         mode = Freedesktop;
     }
 #endif
-#ifdef Q_OS_MAC
+#if defined(Q_OS_MAC) && QT_VERSION < 0x050400
     // Check if Growl is installed (based on Qt's tray icon implementation)
     CFURLRef cfurl;
     OSStatus status = LSGetApplicationForInfo(kLSUnknownType, kLSUnknownCreator, CFSTR("growlTicket"), kLSRolesAll, 0, &cfurl);
@@ -225,7 +226,8 @@ void Notificator::notifySystray(Class cls, const QString &title, const QString &
 }
 
 // Based on Qt's tray icon implementation
-#ifdef Q_OS_MAC
+
+#if defined(Q_OS_MAC) && QT_VERSION < 0x050400
 void Notificator::notifyGrowl(Class cls, const QString &title, const QString &text, const QIcon &icon)
 {
     const QString script(
@@ -285,7 +287,7 @@ void Notificator::notify(Class cls, const QString &title, const QString &text, c
     case QSystemTray:
         notifySystray(cls, title, text, icon, millisTimeout);
         break;
-#ifdef Q_OS_MAC
+#if defined(Q_OS_MAC) && QT_VERSION < 0x050400
     case Growl12:
     case Growl13:
         notifyGrowl(cls, title, text, icon);

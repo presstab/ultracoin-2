@@ -6,8 +6,9 @@
 #     brew install npm
 #     npm install -f appdmg
 
-rm Ultracoin-Qt.app
+rm -f Ultracoin-Qt.app
+cp -r ../../build-ultracoin-qt-Desktop_Qt_5_4_0_clang_64bit-Release/UltraCoin-Qt.app .
 rm Ultracoin-Qt.dmg
-make
+
 /usr/local/Cellar/qt/4.8.6/bin/macdeployqt UltraCoin-Qt.app -verbose -executable=UltraCoin-Qt.app/Contents/MacOS/UltraCoin-Qt
 appdmg appdmg.json UltraCoin-Qt.dmg

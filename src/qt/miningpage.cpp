@@ -251,10 +251,13 @@ void MiningPage::minerStarted()
 {
     if (!minerActive)
         if (getMiningType() == ClientModel::SoloMining)
+        {
             reportToList(tr("Solo mining started."), ERROR, NULL);
-
+        }
         else
+        {
             reportToList(tr("Miner started. You might not see any output for a few minutes."), STARTED, NULL);
+        }
     minerActive = true;
     resetMiningButton();    
     clientModel->setMining(getMiningType(), true, initThreads, 0);

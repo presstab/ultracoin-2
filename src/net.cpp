@@ -15,7 +15,7 @@
 #include <string.h>
 #endif
 
-#ifdef USE_UPNP
+#if (USE_UPNP > 0)
 #include <miniupnpc/miniwget.h>
 #include <miniupnpc/miniupnpc.h>
 #include <miniupnpc/upnpcommands.h>
@@ -31,7 +31,7 @@ void ThreadMessageHandler2(void* parg);
 void ThreadSocketHandler2(void* parg);
 void ThreadOpenConnections2(void* parg);
 void ThreadOpenAddedConnections2(void* parg);
-#ifdef USE_UPNP
+#if (USE_UPNP > 0)
 void ThreadMapPort2(void* parg);
 #endif
 void ThreadDNSAddressSeed2(void* parg);
@@ -887,7 +887,7 @@ void ThreadSocketHandler2(void* parg)
 
                     if (nPos > ReceiveBufferSize()) {
                         if (!pnode->fDisconnect)
-                            printf("socket recv flood control disconnect (%"PRIszu" bytes)\n", vRecv.size());
+                            printf("socket recv flood control disconnect (%" PRIszu " bytes)\n", vRecv.size());
                         pnode->CloseSocketDisconnect();
                     }
                     else {
@@ -997,7 +997,7 @@ void ThreadSocketHandler2(void* parg)
 
 
 
-#ifdef USE_UPNP
+#if (USE_UPNP > 0)
 void ThreadMapPort(void* parg)
 {
     // Make this thread recognisable as the UPnP thread
@@ -1225,7 +1225,7 @@ void DumpAddresses()
     CAddrDB adb;
     adb.Write(addrman);
 
-    printf("Flushed %d addresses to peers.dat  %"PRI64d"ms\n",
+    printf("Flushed %d addresses to peers.dat  %" PRI64d "ms\n",
            addrman.size(), GetTimeMillis() - nStart);
 }
 
@@ -1943,7 +1943,7 @@ bool StopNode()
     if (vnThreadsRunning[THREAD_MINER] > 0) printf("ThreadBitcoinMiner still running\n");
     if (vnThreadsRunning[THREAD_RPCLISTENER] > 0) printf("ThreadRPCListener still running\n");
     if (vnThreadsRunning[THREAD_RPCHANDLER] > 0) printf("ThreadsRPCServer still running\n");
-#ifdef USE_UPNP
+#if (USE_UPNP > 0)
     if (vnThreadsRunning[THREAD_UPNP] > 0) printf("ThreadMapPort still running\n");
 #endif
     if (vnThreadsRunning[THREAD_DNSSEED] > 0) printf("ThreadDNSAddressSeed still running\n");

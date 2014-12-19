@@ -7,7 +7,9 @@
 #include "util.h"
 #include "sync.h"
 
-#ifndef WIN32
+#ifdef __arm__
+#include <fcntl.h>
+#elif !defined(WIN32)
 #include <sys/fcntl.h>
 #endif
 

@@ -5,6 +5,7 @@
 #include "monitoreddatamapper.h"
 #include "netbase.h"
 #include "optionsmodel.h"
+#include "macnotificationhandler.h"
 
 #include <QDir>
 #include <QIntValidator>
@@ -25,10 +26,9 @@ OptionsDialog::OptionsDialog(QWidget *parent) :
     ui->setupUi(this);
 
     /* Network elements init */
-#ifndef USE_UPNP
+#if defined(USE_UPNP) && (USE_UPNP == 1)
     ui->mapPortUpnp->setEnabled(false);
 #endif
-
     ui->proxyIp->setEnabled(false);
     ui->proxyPort->setEnabled(false);
     ui->proxyPort->setValidator(new QIntValidator(1, 65535, this));

@@ -5,12 +5,18 @@ VERSION = 0.4.2
 INCLUDEPATH += src src/json src/qt
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE SCRYPT_CHACHA SCRYPT_KECCAK512 MINIUPNP_STATICLIB 
 macx:DEFINES += MAC_OSX
+android:DEFINES += __arm__ OPTIMIZED_SALSA
 windows:DEFINES += __MINGW64__ BOOST_USE_WINDOWS_H
 CONFIG += no_include_pwd
 CONFIG += thread
+android:DEPSDIR=/android/arm-gcc-4.6
 macx:DEPSDIR=/usr/local
-!macx:QMAKE_LFLAGS=-static
+iphonesimulator:DEPSDIR=/ios/i386-apple-darwin14
+iphone:DEPSDIR=/ios/ios-universal
+
+macx:QMAKE_CXXFLAGS += -stdlib=libc++
 USE_LEVELDB=1
+USE_UPNP=0
 
 # for boost 1.37, add -mt to the boost libraries
 # use: qmake BOOST_LIB_SUFFIX=-mt
@@ -28,6 +34,7 @@ win32:OPENSSL_LIB_PATH="../deps/openssl-1.0.1j"
 win32:MINIUPNPC_LIB_PATH="../deps/miniupnpc"
 win32:MINIUPNPC_INCLUDE_PATH="../deps"
 
+#brew install automake libtool openssl pkg-config protobuf boost berkeley-db4 miniupnpc qrencode --build-from-source
 macx:BOOST_LIB_SUFFIX=-mt
 macx:BOOST_INCLUDE_PATH=$$DEPSDIR/include
 macx:BOOST_LIB_PATH=$$DEPSDIR/lib
@@ -37,6 +44,30 @@ macx:OPENSSL_INCLUDE_PATH=$$DEPSDIR/include
 macx:OPENSSL_LIB_PATH=$$DEPSDIR/lib
 macx:MINIUPNPC_LIB_PATH=$$DEPSDIR/lib
 macx:MINIUPNPC_INCLUDE_PATH=$DEPSDIR/include
+
+android:BOOST_LIB_SUFFIX=-gcc-mt-1_53
+android:BOOST_INCLUDE_PATH=$$DEPSDIR/include
+android:BOOST_LIB_PATH=$$DEPSDIR/lib
+android:BDB_INCLUDE_PATH=$$DEPSDIR/include
+android:BDB_LIB_PATH=$$DEPSDIR/lib
+android:OPENSSL_INCLUDE_PATH=$$DEPSDIR/include
+android:OPENSSL_LIB_PATH=$$DEPSDIR/lib
+android:MINIUPNPC_LIB_PATH=$$DEPSDIR/lib
+android:MINIUPNPC_INCLUDE_PATH=$DEPSDIR/include
+android:USE_UPNP=0
+
+iphonesimulator:BOOST_LIB_SUFFIX=-gcc-mt-1_53
+iphonesimulator:BOOST_INCLUDE_PATH=/ios/ios-universal/include
+iphonesimulator:BOOST_LIB_PATH=/ios/ios-universal//lib
+iphonesimulator:BDB_INCLUDE_PATH=$$DEPSDIR/include
+iphonesimulator:BDB_LIB_PATH=$$DEPSDIR/lib
+iphonesimulator:OPENSSL_INCLUDE_PATH=/ios/ios-universal/include
+iphonesimulator:OPENSSL_LIB_PATH=/ios/ios-universal/lib
+iphonesimulator:MINIUPNPC_LIB_PATH=$$DEPSDIR/lib
+iphonesimulator:MINIUPNPC_INCLUDE_PATH=$DEPSDIR/include
+iphonesimulator:USE_UPNP=0
+iphonesimulator:USE_LEVELDB=0
+iphonesimulator:USE_BUILDINFO=0
 
 # Dependency library locations can be customized with:
 #    BOOST_INCLUDE_PATH, BOOST_LIB_PATH, BDB_INCLUDE_PATH,
@@ -49,7 +80,7 @@ UI_DIR = build
 # use: qmake "RELEASE=1"
 contains(RELEASE, 1) {
     # Mac: compile for maximum compatibility (10.5, 32-bit)
-    macx:QMAKE_CXXFLAGS += -mmacosx-version-min=10.5 -arch i386 -isysroot /Developer/SDKs/MacOSX10.5.sdk
+    macx:QMAKE_CXXFLAGS += -mmacosx-version-min=10.5 -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.5.sdk
 
     !windows:!macx {
         # Linux: static link
@@ -80,11 +111,11 @@ contains(USE_QRCODE, 1) {
 #  or: qmake "USE_UPNP=0" (disabled by default)
 #  or: qmake "USE_UPNP=-" (not supported)
 # miniupnpc (http://miniupnp.free.fr/files/) must be installed for support
-contains(USE_UPNP, 1) {
+contains(USE_UPNP, 0) {
     message(Building without UPNP support)
 } else {
     message(Building with UPNP support)
-    count(USE_UPNP, 0) {
+    count(USE_UPNP, 1) {
         USE_UPNP=1
     }
     DEFINES += USE_UPNP=$$USE_UPNP STATICLIB
@@ -122,19 +153,37 @@ contains(USE_LEVELDB, 1) {
     DEFINES += USE_LEVELDB=1
 
     INCLUDEPATH += src/leveldb/include src/leveldb/helpers
-    LIBS += $$PWD/src/leveldb/libleveldb.a $$PWD/src/leveldb/libmemenv.a
+    !macx:LIBS += $$PWD/src/leveldb/libleveldb.a $$PWD/src/leveldb/libmemenv.a
     SOURCES += src/txdb-leveldb.cpp
-    !win32 {
-        # we use QMAKE_CXXFLAGS_RELEASE even without RELEASE=1 because we use RELEASE to indicate linking preferences not -O preferences
-        genleveldb.commands = cd $$PWD/src/leveldb && CC=$$QMAKE_CC CXX=$$QMAKE_CXX $(MAKE) OPT=\"$$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\" libleveldb.a libmemenv.a
-    } else {
+
+    win32 {
         # make an educated guess about what the ranlib command is called
         isEmpty(QMAKE_RANLIB) {
             QMAKE_RANLIB = $$replace(QMAKE_STRIP, strip, ranlib)
         }
         LIBS += -lshlwapi
         genleveldb.commands = cd $$PWD/src/leveldb && CC=$$QMAKE_CC CXX=$$QMAKE_CXX TARGET_OS=OS_WINDOWS_CROSSCOMPILE $(MAKE) OPT=\"$$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\" libleveldb.a libmemenv.a && $$QMAKE_RANLIB $$PWD/src/leveldb/libleveldb.a && $$QMAKE_RANLIB $$PWD/src/leveldb/libmemenv.a
-    }
+    
+    } else:android  {
+        message(Building leveldb with target OS of Android)
+        for (var, $$list($$QMAKE_INCDIR)) {
+            INC += -I$$var
+        }
+        genleveldb.commands = cd $$PWD/src/leveldb && CC=$$QMAKE_CC CXX=$$QMAKE_CXX AR=\"$$NDK_TOOLCHAIN_PATH/bin/$$NDK_TOOLS_PREFIX-ar\" TARGET_OS=OS_ANDROID_CROSSCOMPILE $(MAKE) OPT=\"$$QMAKE_CXXFLAGS $$INC $$QMAKE_CXXFLAGS_RELEASE $$PLATFORM_CXXFLAGS\" libleveldb.a libmemenv.a && $$QMAKE_RANLIB $$PWD/src/leveldb/libleveldb.a && $$QMAKE_RANLIB $$PWD/src/leveldb/libmemenv.a
+
+    } else:ios {
+        message(Building leveldb with target OS of IOS)
+        for (var, $$list($$QMAKE_INCDIR)) {
+            INC += -I$$var
+        }
+        genleveldb.commands = cd $$PWD/src/leveldb && CC=$$QMAKE_CC CXX=$$QMAKE_CXX AR=\"$$QMAKE_AR\" TARGET_OS=IOS $(MAKE) OPT=\"$$QMAKE_CXXFLAGS $$INC $$QMAKE_CXXFLAGS_RELEASE $$PLATFORM_CXXFLAGS\" libleveldb.a libmemenv.a && $$QMAKE_RANLIB $$PWD/src/leveldb/libleveldb.a && $$QMAKE_RANLIB $$PWD/src/leveldb/libmemenv.a
+
+    } else:macx {
+        genleveldb.commands = cd $$PWD/src/leveldb && CC=$$QMAKE_CC CXX=$$QMAKE_CXX $(MAKE) OPT=\"$$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\"
+    } else {
+        # we use QMAKE_CXXFLAGS_RELEASE even without RELEASE=1 because we use RELEASE to indicate linking preferences not -O preferences
+        genleveldb.commands = cd $$PWD/src/leveldb && CC=$$QMAKE_CC CXX=$$QMAKE_CXX $(MAKE) OPT=\"-arch x86_64 $$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\" libleveldb.a libmemenv.a
+    } 
     genleveldb.target = $$PWD/src/leveldb/libleveldb.a
     genleveldb.depends = FORCE
     PRE_TARGETDEPS += $$PWD/src/leveldb/libleveldb.a
@@ -151,7 +200,7 @@ GIT_TIMESTAMP = $$system($$quote(git log -n 1 --format=format:"%at"))
 QMAKE_SUBSTITUTES += $$PWD/src/version.h.in
 
 # regenerate src/build.h
-!windows|contains(USE_BUILD_INFO, 1) {
+contains(USE_BUILD_INFO, 1) {
     genbuild.depends = FORCE
     genbuild.commands = cd $$PWD; /bin/sh share/genbuild.sh $$OUT_PWD/build/build.h
     genbuild.target = $$OUT_PWD/build/build.h
@@ -245,7 +294,46 @@ HEADERS += src/qt/bitcoingui.h \
     src/version.h \
     src/netbase.h \
     src/qt/miningpage.h \
-    src/clientversion.h
+    src/clientversion.h \
+    src/qt/macnotificationhandler.h \
+    src/scrypt-jane/code/scrypt-conf.h \
+    src/scrypt-jane/code/scrypt-jane-chacha.h \
+    src/scrypt-jane/code/scrypt-jane-hash.h \
+    src/scrypt-jane/code/scrypt-jane-hash_blake256.h \
+    src/scrypt-jane/code/scrypt-jane-hash_blake512.h \
+    src/scrypt-jane/code/scrypt-jane-hash_keccak.h \
+    src/scrypt-jane/code/scrypt-jane-hash_sha256.h \
+    src/scrypt-jane/code/scrypt-jane-hash_sha512.h \
+    src/scrypt-jane/code/scrypt-jane-hash_skein512.h \
+    src/scrypt-jane/code/scrypt-jane-mix_chacha-avx.h \
+    src/scrypt-jane/code/scrypt-jane-mix_chacha-sse2.h \
+    src/scrypt-jane/code/scrypt-jane-mix_chacha-ssse3.h \
+    src/scrypt-jane/code/scrypt-jane-mix_chacha-xop.h \
+    src/scrypt-jane/code/scrypt-jane-mix_chacha.h \
+    src/scrypt-jane/code/scrypt-jane-mix_salsa-avx.h \
+    src/scrypt-jane/code/scrypt-jane-mix_salsa-sse2.h \
+    src/scrypt-jane/code/scrypt-jane-mix_salsa-xop.h \
+    src/scrypt-jane/code/scrypt-jane-mix_salsa.h \
+    src/scrypt-jane/code/scrypt-jane-mix_salsa64-avx.h \
+    src/scrypt-jane/code/scrypt-jane-mix_salsa64-avx2.h \
+    src/scrypt-jane/code/scrypt-jane-mix_salsa64-sse2.h \
+    src/scrypt-jane/code/scrypt-jane-mix_salsa64-ssse3.h \
+    src/scrypt-jane/code/scrypt-jane-mix_salsa64-xop.h \
+    src/scrypt-jane/code/scrypt-jane-mix_salsa64.h \
+    src/scrypt-jane/code/scrypt-jane-pbkdf2.h \
+    src/scrypt-jane/code/scrypt-jane-portable-x86.h \
+    src/scrypt-jane/code/scrypt-jane-portable.h \
+    src/scrypt-jane/code/scrypt-jane-romix-basic.h \
+    src/scrypt-jane/code/scrypt-jane-romix-template.h \
+    src/scrypt-jane/code/scrypt-jane-romix.h \
+    src/scrypt-jane/code/scrypt-jane-salsa.h \
+    src/scrypt-jane/code/scrypt-jane-salsa64.h \
+    src/scrypt-jane/code/scrypt-jane-test-vectors.h \
+    src/scrypt-jane/scrypt-jane.h \
+    src/txdb-bdb.h \
+    src/txdb-leveldb.h \
+    src/txdb.h \
+    src/scrypt-arm.S
 
 SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/qt/transactiontablemodel.cpp \
@@ -313,13 +401,19 @@ SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/scrypt_mine.cpp \
     src/qt/miningpage.cpp \
     src/pbkdf2.cpp \
-    src/scrypt-jane/scrypt-jane.c
+    src/scrypt-jane/scrypt-jane.c \
+    src/json/json_spirit_reader.cpp \
+    src/json/json_spirit_value.cpp \
+    src/json/json_spirit_writer.cpp
 
-!macx: {
+windows: {
 SOURCES += \
     src/scrypt-x86.S \
     src/scrypt-x86_64.S 
 }
+
+android:SOURCES += src/scrypt-arm.S src/ifaddrs.c
+android:HEADERS += src/ifaddrs.h
 
 RESOURCES += \
     src/qt/bitcoin.qrc
@@ -422,7 +516,7 @@ windows:!contains(MINGW_THREAD_BUGFIX, 0) {
     QMAKE_LIBS_QT_ENTRY = -lmingwthrd $$QMAKE_LIBS_QT_ENTRY
 }
 
-!windows:!macx {
+!windows:!macx:!android {
     DEFINES += LINUX
     LIBS += -lrt
 }
@@ -437,17 +531,20 @@ macx:LIBS += -framework Foundation -framework ApplicationServices -framework App
 macx:DEFINES += MAC_OSX MSG_NOSIGNAL=0
 macx:ICON = src/qt/res/icons/ultracoin.icns
 macx:TARGET = "UltraCoin-Qt"
-macx:QMAKE_CFLAGS_THREAD += -pthread
+macx:QMAKE_CFLAGS_THREAD += -pthread -arch x86_64
 macx:QMAKE_LFLAGS_THREAD += -pthread
-macx:QMAKE_CXXFLAGS_THREAD += -pthread -no-integrated-as
+macx:QMAKE_CXXFLAGS_THREAD += -pthread -no-integrated-as -arch x86_64
 
 # Set libraries and includes at end, to use platform-defined defaults if not overridden
 INCLUDEPATH += $$BOOST_INCLUDE_PATH $$BDB_INCLUDE_PATH $$OPENSSL_INCLUDE_PATH $$QRENCODE_INCLUDE_PATH
+macx:LIBS += -stdlib=libc++
 LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRENCODE_LIB_PATH,,-L,)
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # -lgdi32 has to happen after -lcrypto (see  #681)
 windows:LIBS += -lws2_32 -lshlwapi -lmswsock -lole32 -loleaut32 -luuid -lgdi32
+ios:LIBS += /ios/ios-universal/lib/boost.a
 LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
+macx:LIBS += -L$$PWD/src/leveldb -lleveldb
 windows:LIBS += -lboost_chrono$$BOOST_LIB_SUFFIX
 
 contains(RELEASE, 1) {
@@ -458,3 +555,10 @@ contains(RELEASE, 1) {
 }
 
 system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)
+
+DISTFILES += \
+    android/AndroidManifest.xml
+
+ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+
+
