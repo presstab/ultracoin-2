@@ -376,7 +376,6 @@
     </layout>
    </item>
   </layout>
-  <zorder></zorder>
  </widget>
  <resources>
  <include location="../bitcoin.qrc"/>

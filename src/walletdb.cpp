@@ -571,7 +571,11 @@ bool BackupWallet(const CWallet& wallet, const string& strDest)
 #if BOOST_VERSION >= 105600
                     filesystem::copy_file(pathSrc, pathDest, filesystem::copy_option::overwrite_if_exists, code);
 #else
+#ifdef ANDROID
+                    copy_file(pathSrc.string().c_str(), pathDest.string().c_str());
+#else
                     filesystem::copy_file(pathSrc, pathDest, filesystem::copy_option::overwrite_if_exists);
+#endif
 #endif
 
 

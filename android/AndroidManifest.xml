@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
-<manifest package="net.ultracoin.ultracoinqt" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="0.7.3.3-23" android:versionCode="7730023" android:installLocation="auto">
+<manifest package="net.ultracoin.ultracoinqt" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="0.7.3.3-23" android:versionCode="7730024" android:installLocation="auto">
     <application android:debuggable="false" android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="ultracoin-qt" android:icon="@drawable/icon">
-        <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|locale|fontScale|keyboard|keyboardHidden|navigation" android:name="org.qtproject.qt5.android.bindings.QtActivity" android:label="ultracoin-qt" android:screenOrientation="unspecified" android:launchMode="singleTop">
+        <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|locale|fontScale|keyboard|keyboardHidden|navigation" android:name="org.qtproject.qt5.android.bindings.QtActivity" android:label="ultracoin-qt" android:screenOrientation="landscape" android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

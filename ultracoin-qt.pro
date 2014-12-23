@@ -333,7 +333,10 @@ HEADERS += src/qt/bitcoingui.h \
     src/txdb-bdb.h \
     src/txdb-leveldb.h \
     src/txdb.h \
-    src/scrypt-arm.S
+    src/scrypt-arm.S \
+    src/qt/bootstrapdialog.h \
+    src/chain.h \
+    src/streams.h
 
 SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/qt/transactiontablemodel.cpp \
@@ -404,7 +407,9 @@ SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/scrypt-jane/scrypt-jane.c \
     src/json/json_spirit_reader.cpp \
     src/json/json_spirit_value.cpp \
-    src/json/json_spirit_writer.cpp
+    src/json/json_spirit_writer.cpp \
+    src/qt/bootstrapdialog.cpp \
+    src/chain.cpp
 
 windows: {
 SOURCES += \
@@ -431,7 +436,8 @@ FORMS += \
     src/qt/forms/askpassphrasedialog.ui \
     src/qt/forms/rpcconsole.ui \
     src/qt/forms/miningpage.ui \
-    src/qt/forms/optionsdialog.ui
+    src/qt/forms/optionsdialog.ui \
+    src/qt/forms/bootstrapdialog.ui
 
 contains(USE_QRCODE, 1) {
 HEADERS += src/qt/qrcodedialog.h
@@ -557,7 +563,10 @@ contains(RELEASE, 1) {
 system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)
 
 DISTFILES += \
-    android/AndroidManifest.xml
+    android/AndroidManifest.xml \
+    android/src/org/qtproject/qt5/android/bindings/NotificationClient.java \
+    android/src/org/qtproject/qt5/android/bindings/QtActivity.java \
+    android/src/org/qtproject/qt5/android/bindings/QtApplication.java
 
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
 

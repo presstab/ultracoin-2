@@ -426,7 +426,11 @@ bool AppInit2()
 #if !defined(QT_GUI)
     fServer = true;
 #endif
+#ifdef ANDROID
+    fPrintToConsole = true;
+#else
     fPrintToConsole = GetBoolArg("-printtoconsole");
+#endif
     fPrintToDebugger = GetBoolArg("-printtodebugger");
     fLogTimestamps = GetBoolArg("-logtimestamps");
 
