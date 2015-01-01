@@ -340,7 +340,7 @@ get_xgetbv(uint32_t flags) {
 size_t cpu_detect_mask = (size_t)-1;
 #endif
 
-static size_t
+size_t
 detect_cpu(void) {
 	union { uint8_t s[12]; uint32_t i[3]; } vendor_string;
 	cpu_vendors_x86 vendor = cpu_nobody;
@@ -461,7 +461,7 @@ get_top_cpuflag_desc(size_t flag) {
 
 #else
 
-static size_t
+size_t
 detect_cpu(void) {
 	return 0;
 }

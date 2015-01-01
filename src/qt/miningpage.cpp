@@ -1,8 +1,32 @@
 #include <boost/thread.hpp>
+#include <QMessageBox>
+
 #include "walletmodel.h"
 #include "askpassphrasedialog.h"
 #include "miningpage.h"
 #include "ui_miningpage.h"
+
+#ifdef WIN32
+
+#include "base58.h"
+
+extern "C" size_t detect_cpu(void);
+extern CBitcoinAddress GetAccountAddress(std::string strAccount, bool bForceNew=false);
+
+typedef enum cpu_flags_x86_t {
+    cpu_mmx = 1 << 0,
+    cpu_sse = 1 << 1,
+    cpu_sse2 = 1 << 2,
+    cpu_sse3 = 1 << 3,
+    cpu_ssse3 = 1 << 4,
+    cpu_sse4_1 = 1 << 5,
+    cpu_sse4_2 = 1 << 6,
+    cpu_avx = 1 << 7,
+    cpu_xop = 1 << 8,
+    cpu_avx2 = 1 << 9
+} cpu_flags_x86;
+
+#endif
 
 MiningPage::MiningPage(QWidget *parent) :
     QWidget(parent),
@@ -70,6 +94,8 @@ void MiningPage::startPressed()
         saveSettings();
         if (getMiningType() == ClientModel::SoloMining)
             minerStarted();
+        else if (getMiningType() == ClientModel::OneClickMining)
+            startOneClickMining();
         else
             startPoolMining();
     }
@@ -77,9 +103,112 @@ void MiningPage::startPressed()
     {
         if (getMiningType() == ClientModel::SoloMining)
             minerFinished();
+        else if (getMiningType() == ClientModel::OneClickMining)
+            stopOneClickMining();
         else
             stopPoolMining();
     }
+}
+
+
+void MiningPage::startOneClickMining()
+{
+#ifndef WIN32
+    QMessageBox::warning(this, tr("One Click Mining not supported with this platform"),
+        tr("One-Click mining only works on the Windows platform."),
+        QMessageBox::Ok, QMessageBox::Ok);
+    return;
+#else
+
+    size_t cpu_flags = detect_cpu();
+    bool avx_support = false;
+
+    if ((cpu_flags & cpu_avx) != 0){
+        avx_support = true;
+    }
+
+    QStringList args;
+    QString url = ui->serverLine->currentText();
+    if(url.length() == 0){
+        reportToList(tr("please input the sever address"), ERROR, NULL);
+        return;
+    }
+    if(ui->usernameLine->text().length() == 0){
+        reportToList(tr("use name should not be empty"), ERROR, NULL);
+        return;
+    }
+    if (!url.contains("http://")){
+        url.prepend("http://");
+    }
+    QString urlLine = QString("%1:%2").arg(url, ui->portLine->text().length() == 0 ? "80" : ui->portLine->text());
+
+
+
+
+    threadSpeed.clear();
+
+    acceptedShares = 0;
+    rejectedShares = 0;
+
+    roundAcceptedShares = 0;
+    roundRejectedShares = 0;
+
+    // If minerd is in current path, then use that. Otherwise, assume minerd is in the path somewhere.
+    //QString program = QDir::current().filePath("minerd");
+    QString program = QDir(QCoreApplication::applicationDirPath()).filePath("oneclick.vbs");
+    if (!QFile::exists(program))
+        program = "oneclock.vbs";
+
+    args << "/K";
+
+    QString vbScriptArgs;
+
+    CBitcoinAddress oneClickAddr;
+
+    try
+    {
+        oneClickAddr = GetAccountAddress("oneclick", false);
+    }
+    catch (...)
+    {
+        QMessageBox::warning(this, tr("Error retrieving/generating wallet address"),
+            tr("Unable to get account address for account label 'oneclick'"),
+            QMessageBox::Ok, QMessageBox::Ok);
+        return;
+    }
+
+    vbScriptArgs.append("cscript.exe ");
+    vbScriptArgs.append(program).append(" ");
+    vbScriptArgs.append("--algo scrypt-jane ");
+    if(ui->passwordLine->text().length() == 0){
+        vbScriptArgs.append("--user ").append(ui->usernameLine->text().toLatin1()).append(" ");
+    }else{
+        vbScriptArgs.append("--userpass ").append(QString("%1:%2 ").arg(ui->usernameLine->text(), ui->passwordLine->text()).toLatin1());
+    }
+    vbScriptArgs.append("--scantime ").append(ui->scantimeBox->text().toLatin1()).append(" ");
+    vbScriptArgs.append("--url ").append(urlLine.toLatin1()).append(" ");
+    vbScriptArgs.append("--avx ").append(QString::number(avx_support)).append(" ");
+    vbScriptArgs.append("--threads ").append(ui->threadsBox->text().toLatin1()).append(" ");
+    vbScriptArgs.append("--minewithcpu ").append(QString::number(ui->mineWithCPUCheckBox->isEnabled())).append(" ");
+    vbScriptArgs.append("--UTCAddr ").append(QString::fromStdString(oneClickAddr.ToString())).append(" ");
+    args << vbScriptArgs;
+    if (ui->debugCheckBox->isChecked())
+        ui->list->addItem(args.join(" ").prepend(" ").prepend("cmd.exe "));
+
+    ui->mineSpeedLabel->setText("Speed: N/A");
+    ui->shareCount->setText("Accepted: 0 - Rejected: 0");
+    minerProcess->start("cmd.exe",args);
+    minerProcess->waitForStarted(-1);
+
+    readTimer->start(500);
+#endif
+}
+
+void MiningPage::stopOneClickMining()
+{
+    ui->mineSpeedLabel->setText("");
+    minerProcess->kill();
+    readTimer->stop();
 }
 
 void MiningPage::startPoolMining()
@@ -182,7 +311,8 @@ void MiningPage::readProcessOutput()
             QString line = list.at(i);
 
             // Ignore protocol dump
-            if (!line.startsWith("[") || line.contains("JSON protocol") || line.contains("HTTP hdr"))
+            if (getMiningType() != ClientModel::OneClickMining || !line.startsWith("[") ||
+                    line.contains("JSON protocol") || line.contains("HTTP hdr"))
                 continue;
 
             if (ui->debugCheckBox->isChecked())
@@ -190,6 +320,9 @@ void MiningPage::readProcessOutput()
                 ui->list->addItem(line.trimmed());
                 ui->list->scrollToBottom();
             }
+
+            if (getMiningType() == ClientModel::OneClickMining)
+                continue;
 
             if (line.contains("(yay!!!)"))
                 reportToList(tr("Share accepted"), SHARE_SUCCESS, getTime(line));
@@ -374,9 +507,9 @@ void MiningPage::enablePoolMiningControls(bool enable)
 
 ClientModel::MiningType MiningPage::getMiningType()
 {
-    if (ui->typeBox->currentIndex() == 0)  // Solo Mining
+    if (ui->typeBox->currentIndex() == 2) // One Click Mining
     {
-        return ClientModel::SoloMining;
+        return ClientModel::OneClickMining;
     }
     else if (ui->typeBox->currentIndex() == 1)  // Pool Mining
     {
@@ -399,10 +532,17 @@ void MiningPage::typeChanged(int index)
 {
     if (index == 0)  // Solo Mining
     {
+        ui->mineWithCPUCheckBox->setEnabled(false);
         enablePoolMiningControls(false);
     }
     else if (index == 1)  // Pool Mining
     {
+        ui->mineWithCPUCheckBox->setEnabled(false);
+        enablePoolMiningControls(true);
+    }
+    else if (index == 2) // OneClick Mining
+    {
+        ui->mineWithCPUCheckBox->setEnabled(true);
         enablePoolMiningControls(true);
     }
 }

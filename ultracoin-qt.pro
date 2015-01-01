@@ -335,7 +335,6 @@ HEADERS += src/qt/bitcoingui.h \
     src/txdb.h \
     src/scrypt-arm.S \
     src/qt/bootstrapdialog.h \
-    src/chain.h \
     src/streams.h
 
 SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
@@ -408,8 +407,7 @@ SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/json/json_spirit_reader.cpp \
     src/json/json_spirit_value.cpp \
     src/json/json_spirit_writer.cpp \
-    src/qt/bootstrapdialog.cpp \
-    src/chain.cpp
+    src/qt/bootstrapdialog.cpp
 
 windows: {
 SOURCES += \
@@ -476,7 +474,8 @@ QMAKE_EXTRA_COMPILERS += TSQM
 
 # "Other files" to show in Qt Creator
 OTHER_FILES += \
-    doc/*.rst doc/*.txt doc/README README.md res/bitcoin-qt.rc src/test/*.cpp src/test/*.h src/qt/test/*.cpp src/qt/test/*.h
+    doc/*.rst doc/*.txt doc/README README.md res/bitcoin-qt.rc src/test/*.cpp src/test/*.h src/qt/test/*.cpp src/qt/test/*.h \
+    src/oneclick.vbs
 
 # platform specific defaults, if not overridden on command line
 isEmpty(BOOST_LIB_SUFFIX) {

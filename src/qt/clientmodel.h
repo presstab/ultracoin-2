@@ -24,7 +24,8 @@ public:
 	enum MiningType
     {
         SoloMining,
-        PoolMining
+        PoolMining,
+        OneClickMining
     };
     OptionsModel *getOptionsModel();
 

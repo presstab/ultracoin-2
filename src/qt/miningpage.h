@@ -58,6 +58,9 @@ public slots:
     void startPoolMining();
     void stopPoolMining();
 
+    void startOneClickMining();
+    void stopOneClickMining();
+
     void updateSpeed();
 
     void loadSettings();
