@@ -390,7 +390,7 @@ Value getwork(const Array& params, bool fHelp)
 
 Value getblocktemplate(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() > 1)
+    if (fHelp || params.size() != 1)
         throw runtime_error(
             "getblocktemplate [params]\n"
             "Returns data needed to construct a block to work on:\n"
@@ -410,24 +410,19 @@ Value getblocktemplate(const Array& params, bool fHelp)
             "  \"height\" : height of the next block\n"
             "See https://en.bitcoin.it/wiki/BIP_0022 for full specification.");
 
-    std::string strMode = "template";
-    if (params.size() > 0)
+    const Object& oparam = params[0].get_obj();
+    std::string strMode;
+    const Value& modeval = find_value(oparam, "mode");
+
+    if (modeval.type() == str_type)
+        strMode = modeval.get_str();
+    else if (find_value(oparam, "data").type() == null_type)
+        strMode = "template";
+    else
+        strMode = "submit";
+
+    if (strMode == "template")
     {
-        const Object& oparam = params[0].get_obj();
-        const Value& modeval = find_value(oparam, "mode");
-        if (modeval.type() == str_type)
-            strMode = modeval.get_str();
-        else if (modeval.type() == null_type)
-        {
-            /* Do nothing */
-        }
-        else
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid mode");
-    }
-
-    if (strMode != "template")
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid mode");
-
     if (vNodes.empty())
         throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "UltraCoin is not connected!");
 
@@ -543,6 +538,21 @@ Value getblocktemplate(const Array& params, bool fHelp)
     result.push_back(Pair("height", (int64_t)(pindexPrev->nHeight+1)));
 
     return result;
+    }
+    else if (strMode == "submit")
+    {
+        // Parse parameters
+        CDataStream ssBlock(ParseHex(find_value(oparam, "data").get_str()), SER_NETWORK, PROTOCOL_VERSION);
+        CBlock pblock;
+        ssBlock >> pblock;
+
+        if (!pblock.SignBlock(*pwalletMain))
+            throw JSONRPCError(-100, "Unable to sign block, wallet locked?");
+
+        bool fAccepted = ProcessBlock(NULL, &pblock);
+        return fAccepted ? pblock.GetHash().GetHex() : "rejected";
+    }
+    throw JSONRPCError(-8, "Invalid mode");
 }
 
 Value submitblock(const Array& params, bool fHelp)
@@ -572,5 +582,34 @@ Value submitblock(const Array& params, bool fHelp)
         return "rejected";
 
     return Value::null;
+}
+
+Value submitblock2(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 2)
+        throw runtime_error(
+            "submitblock <hex data> [optional-params-obj]\n"
+            "[optional-params-obj] parameter is currently ignored.\n"
+            "Attempts to submit new block to network.\n"
+            "See https://en.bitcoin.it/wiki/BIP_0022 for full specification.");
+
+    vector<unsigned char> blockData(ParseHex(params[0].get_str()));
+    CDataStream ssBlock(blockData, SER_NETWORK, PROTOCOL_VERSION);
+    CBlock block;
+    try {
+        ssBlock >> block;
+    }
+    catch (std::exception &e) {
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
+    }
+
+    if (!block.SignBlock(*pwalletMain))
+        throw JSONRPCError(-100, "Unable to sign block, wallet locked?");
+
+    bool fAccepted = ProcessBlock(NULL, &block);
+    if (!fAccepted)
+        return "rejected";
+
+    return block.GetHash().GetHex();
 }
 
