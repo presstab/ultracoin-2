@@ -19,6 +19,7 @@
 #include <sys/socket.h>
 #ifdef __arm__
 #include <fcntl.h>
+#include "compat/ifaddrs.h"
 #else
 #include <sys/fcntl.h>
 #endif
