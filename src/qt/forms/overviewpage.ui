@@ -221,13 +221,13 @@
         </widget>
        </item>
        <item>
-       <widget class="QCheckBox" name="checkBox">
-        <property name="text">
-         <string>Enable Stake Minting</string>
-        </property>
-       </widget>
-      </item>
-      <item>
+        <widget class="QCheckBox" name="checkBox">
+         <property name="text">
+          <string>Enable Stake Minting</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -239,16 +239,6 @@
           </size>
          </property>
         </spacer>
-       </item>
-       <item alignment="Qt::AlignHCenter">
-        <widget class="QLabel" name="label_7">
-         <property name="text">
-          <string/>
-         </property>
-         <property name="pixmap">
-          <pixmap resource="../bitcoin.qrc">:/icons/res/icons/ultracoin-2567.png</pixmap>
-         </property>
-        </widget>
        </item>
       </layout>
      </item>
@@ -377,8 +367,6 @@
    </item>
   </layout>
  </widget>
- <resources>
- <include location="../bitcoin.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

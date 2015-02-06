@@ -1,4 +1,10 @@
-QT += core gui network widgets
+QT += core gui network
+
+greaterThan(QT_MAJOR_VERSION, 4) {
+    QT += widgets
+    DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0
+}
+
 TEMPLATE = app
 TARGET = ultracoin-qt
 VERSION = 0.4.2
@@ -16,7 +22,8 @@ iphone:DEPSDIR=/ios/ios-universal
 
 macx:QMAKE_CXXFLAGS += -stdlib=libc++
 USE_LEVELDB=1
-USE_UPNP=0
+USE_UPNP=1
+USE_QRCODE=1
 
 # for boost 1.37, add -mt to the boost libraries
 # use: qmake BOOST_LIB_SUFFIX=-mt
@@ -33,6 +40,8 @@ win32:OPENSSL_INCLUDE_PATH="../deps/openssl-1.0.1j/include"
 win32:OPENSSL_LIB_PATH="../deps/openssl-1.0.1j"
 win32:MINIUPNPC_LIB_PATH="../deps/miniupnpc"
 win32:MINIUPNPC_INCLUDE_PATH="../deps"
+win32:QRCODE_LIB_PATH="../MinGW/msys/1.0/local/lib"
+win32:QRCODE_INCLUDE_PATH="../MinGW/msys/1.0/local/include"
 
 #brew install automake libtool openssl pkg-config protobuf boost berkeley-db4 miniupnpc qrencode --build-from-source
 macx:BOOST_LIB_SUFFIX=-mt
@@ -97,7 +106,7 @@ QMAKE_LFLAGS *= -fstack-protector-all --param ssp-buffer-size=1
 # This can be enabled for Windows, when we switch to MinGW >= 4.4.x.
 }
 # for extra security on Windows: enable ASLR and DEP via GCC linker flags
-win32:QMAKE_LFLAGS *= -Wl,--dynamicbase -Wl,--nxcompat
+win32:QMAKE_LFLAGS += -Wl,--dynamicbase -Wl,--nxcompat
 
 # use: qmake "USE_QRCODE=1"
 # libqrencode (http://fukuchi.org/works/qrencode/index.en.html) must be installed for support
@@ -536,21 +545,20 @@ macx:LIBS += -framework Foundation -framework ApplicationServices -framework App
 macx:DEFINES += MAC_OSX MSG_NOSIGNAL=0
 macx:ICON = src/qt/res/icons/ultracoin.icns
 macx:TARGET = "UltraCoin-Qt"
-macx:QMAKE_CFLAGS_THREAD += -pthread -arch x86_64
-macx:QMAKE_LFLAGS_THREAD += -pthread
-macx:QMAKE_CXXFLAGS_THREAD += -pthread -no-integrated-as -arch x86_64
+macx:QMAKE_CFLAGS_THREAD += -arch x86_64
+macx:QMAKE_CXXFLAGS_THREAD += -no-integrated-as -arch x86_64
 
 # Set libraries and includes at end, to use platform-defined defaults if not overridden
-INCLUDEPATH += $$BOOST_INCLUDE_PATH $$BDB_INCLUDE_PATH $$OPENSSL_INCLUDE_PATH $$QRENCODE_INCLUDE_PATH
+INCLUDEPATH += $$BOOST_INCLUDE_PATH $$BDB_INCLUDE_PATH $$OPENSSL_INCLUDE_PATH $$QRCODE_INCLUDE_PATH
 macx:LIBS += -stdlib=libc++
-LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRENCODE_LIB_PATH,,-L,)
+LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRCODE_LIB_PATH,,-L,)
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # -lgdi32 has to happen after -lcrypto (see  #681)
 windows:LIBS += -lws2_32 -lshlwapi -lmswsock -lole32 -loleaut32 -luuid -lgdi32
 ios:LIBS += /ios/ios-universal/lib/boost.a
 LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
 macx:LIBS += -L$$PWD/src/leveldb -lleveldb
-windows:LIBS += -lboost_chrono$$BOOST_LIB_SUFFIX
+win32:LIBS += -lboost_chrono$$BOOST_LIB_SUFFIX -lpthread
 
 contains(RELEASE, 1) {
     !windows:!macx {

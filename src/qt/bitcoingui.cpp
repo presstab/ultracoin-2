@@ -193,7 +193,6 @@ BitcoinGUI::~BitcoinGUI()
 void BitcoinGUI::createActions()
 {
     QActionGroup *tabGroup = new QActionGroup(this);
-
     overviewAction = new QAction(QIcon(":/icons/overview"), tr("&Overview"), this);
     overviewAction->setToolTip(tr("Show general overview of wallet"));
     overviewAction->setCheckable(true);
@@ -317,18 +316,35 @@ void BitcoinGUI::createMenuBar()
 
 void BitcoinGUI::createToolBars()
 {
-    QToolBar *toolbar = addToolBar(tr("Tabs toolbar"));
+    QLabel *mylabel = new QLabel(this);
+    mylabel->setPixmap(QPixmap(":/images/header"));
+    mylabel->show();
+    QToolBar *toolbar = addToolBar(tr("Menu"));
+    toolbar->setObjectName("toolbar");
+    addToolBar(Qt::LeftToolBarArea, toolbar);
     toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    toolbar->setMovable(false);
+    toolbar->setOrientation(Qt::Vertical);
+    toolbar->setIconSize(QSize(50, 20));
+    mylabel->setObjectName("logo");
+    mylabel->setStyleSheet("#logo { background: rgb(255,255,255); }");
+    toolbar->addWidget(mylabel);
     toolbar->addAction(overviewAction);
     toolbar->addAction(sendCoinsAction);
     toolbar->addAction(receiveCoinsAction);
     toolbar->addAction(historyAction);
     toolbar->addAction(addressBookAction);
-	toolbar->addAction(miningAction);
+    toolbar->addAction(miningAction);
+    QWidget* spacer = new QWidget();
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    toolbar->addWidget(spacer);
+    spacer->setObjectName("spacer");
+    toolbar->addAction(exportAction);
+    toolbar->setStyleSheet("#toolbar { font-weight:600;border:none;height:100%;padding-top:20px; background: rgb(98, 166, 74); text-align: left; color: white;min-width:180px;max-width:180px;} QToolBar QToolButton:hover {background:rgb(80, 192, 80);} QToolBar QToolButton:checked {background:rgba(24, 64, 33, 100);}  QToolBar QToolButton { font-weight:600;font-size:14px;font-family:'Century Gothic';padding-left:20px;padding-right:181px;padding-top:4px;padding-bottom:4px; width:100%; color: white; text-align: left; background:transparent; }");
 
-    QToolBar *toolbar2 = addToolBar(tr("Actions toolbar"));
-    toolbar2->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    toolbar2->addAction(exportAction);
+    //QToolBar *toolbar2 = addToolBar(tr("Actions toolbar"));
+    //toolbar2->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    //toolbar2->addAction(exportAction);
 }
 
 void BitcoinGUI::setClientModel(ClientModel *clientModel)
