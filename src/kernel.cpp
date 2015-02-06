@@ -493,3 +493,4 @@ bool CheckStakeModifierCheckpoints(int nHeight, unsigned int nStakeModifierCheck
         return nStakeModifierChecksum == mapStakeModifierCheckpoints[nHeight];
     return true;
 }
+

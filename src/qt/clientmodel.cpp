@@ -31,8 +31,8 @@ ClientModel::ClientModel(OptionsModel *optionsModel, QObject *parent) :
         miningThreads = 1;
     }
     miningScanTime = 5;
-    miningServer = "pool.ultracoin.com";
-    miningPort = "8337";
+    miningServer = "pool.ultracoin.net";
+    miningPort = "4242";
 
     connect(pollTimer, SIGNAL(timeout()), this, SLOT(updateTimer()));
     subscribeToCoreSignals();

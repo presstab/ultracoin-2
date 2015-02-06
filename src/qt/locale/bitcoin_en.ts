@@ -905,7 +905,7 @@ Address: %4
     </message>
     <message>
         <location line="-103"/>
-        <source>pool.ultracoin.com</source>
+        <source>pool.ultracoin.net</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -956,7 +956,7 @@ Address: %4
     </message>
     <message>
         <location line="-244"/>
-        <source>9332</source>
+        <source>4242</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

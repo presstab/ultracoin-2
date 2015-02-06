@@ -27,6 +27,7 @@
 #include "guiutil.h"
 #include "rpcconsole.h"
 #include "wallet.h"
+#include "bitcoinrpc.h"
 
 #ifdef Q_OS_MAC
 #include "macdockiconhandler.h"
@@ -58,6 +59,11 @@
 #include <QStyle>
 #include <QMimeData>
 #include <iostream>
+
+extern CWallet* pwalletMain;
+extern int64 nLastCoinStakeSearchInterval;
+extern unsigned int nStakeTargetSpacing2;
+extern bool fWalletUnlockStakingOnly;
 
 BitcoinGUI::BitcoinGUI(QWidget *parent):
     QMainWindow(parent),
@@ -133,13 +139,21 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     frameBlocksLayout->setContentsMargins(3,0,3,0);
     frameBlocksLayout->setSpacing(3);
     labelEncryptionIcon = new QLabel();
+    labelStakingIcon = new QLabel();
 	labelMiningIcon = new QLabel();
     labelConnectionsIcon = new QLabel();
     labelBlocksIcon = new QLabel();
-    frameBlocksLayout->addWidget(labelEncryptionIcon,0,Qt::AlignRight);
-    frameBlocksLayout->addWidget(labelMiningIcon,0,Qt::AlignRight);
-    frameBlocksLayout->addWidget(labelConnectionsIcon,0,Qt::AlignRight);
-    frameBlocksLayout->addWidget(labelBlocksIcon,0,Qt::AlignRight);
+    frameBlocksLayout->addStretch();
+    frameBlocksLayout->addWidget(labelStakingIcon);
+    frameBlocksLayout->addStretch();
+    frameBlocksLayout->addWidget(labelEncryptionIcon);
+    frameBlocksLayout->addStretch();
+    frameBlocksLayout->addWidget(labelMiningIcon);
+    frameBlocksLayout->addStretch();
+    frameBlocksLayout->addWidget(labelConnectionsIcon);
+    frameBlocksLayout->addStretch();
+    frameBlocksLayout->addWidget(labelBlocksIcon);
+    frameBlocksLayout->addStretch();
 
     // Progress bar and label for blocks download
     progressBarLabel = new QLabel();
@@ -162,6 +176,12 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     statusBar()->addPermanentWidget(frameBlocks);
 
     syncIconMovie = new QMovie(":/movies/update_spinner", "mng", this);
+    stakingIconMovie = new QMovie(":/movies/staking_spinner", "mng", this);
+
+    QTimer *timerStakingIcon = new QTimer(labelStakingIcon);
+    connect(timerStakingIcon, SIGNAL(timeout()), this, SLOT(updateStakingIcon()));
+    timerStakingIcon->start(30 * 1000);
+    updateStakingIcon();
 
     // Clicking on a transaction on the overview page simply sends you to transaction history page
     connect(overviewPage, SIGNAL(transactionClicked(QModelIndex)), this, SLOT(gotoHistoryPage()));
@@ -198,11 +218,6 @@ void BitcoinGUI::createActions()
     overviewAction->setCheckable(true);
     overviewAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_1));
     tabGroup->addAction(overviewAction);
-
-	miningAction = new QAction(QIcon(":/icons/mining"), tr("&Mining"), this);
-    miningAction->setToolTip(tr("Configure mining"));
-    miningAction->setCheckable(true);
-	tabGroup->addAction(miningAction);
 	
     sendCoinsAction = new QAction(QIcon(":/icons/send"), tr("&Send coins"), this);
     sendCoinsAction->setToolTip(tr("Send coins to a UltraCoin address"));
@@ -228,6 +243,22 @@ void BitcoinGUI::createActions()
     addressBookAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
     tabGroup->addAction(addressBookAction);
 
+    miningAction = new QAction(QIcon(":/icons/mining"), tr("&Mining"), this);
+    miningAction->setToolTip(tr("Configure mining"));
+    miningAction->setCheckable(true);
+    miningAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
+    tabGroup->addAction(miningAction);
+
+    forumAction = new QAction(QIcon(":/icons/toolbar"), tr("&Forums"), this);
+    forumAction->setStatusTip(tr("UltraCoin Talk"));
+    forumAction->setToolTip(forumAction->statusTip());
+    tabGroup->addAction(forumAction);
+
+    websiteAction = new QAction(QIcon(":/icons/toolbar"), tr("&Ultracoin.net"), this);
+    websiteAction->setStatusTip(tr("Visit the Website"));
+    websiteAction->setToolTip(websiteAction->statusTip());
+    tabGroup->addAction(websiteAction);
+
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(gotoOverviewPage()));
 	connect(miningAction, SIGNAL(triggered()), this, SLOT(gotoMiningPage()));
@@ -239,6 +270,8 @@ void BitcoinGUI::createActions()
     connect(historyAction, SIGNAL(triggered()), this, SLOT(gotoHistoryPage()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(gotoAddressBookPage()));
+    connect(websiteAction, SIGNAL(triggered()), this, SLOT(websiteClicked()));
+    connect(forumAction, SIGNAL(triggered()), this, SLOT(forumClicked()));
 
     quitAction = new QAction(QIcon(":/icons/quit"), tr("E&xit"), this);
     quitAction->setToolTip(tr("Quit application"));
@@ -340,6 +373,8 @@ void BitcoinGUI::createToolBars()
     toolbar->addWidget(spacer);
     spacer->setObjectName("spacer");
     toolbar->addAction(exportAction);
+    toolbar->addAction(forumAction);
+    toolbar->addAction(websiteAction);
     toolbar->setStyleSheet("#toolbar { font-weight:600;border:none;height:100%;padding-top:20px; background: rgb(98, 166, 74); text-align: left; color: white;min-width:180px;max-width:180px;} QToolBar QToolButton:hover {background:rgb(80, 192, 80);} QToolBar QToolButton:checked {background:rgba(24, 64, 33, 100);}  QToolBar QToolButton { font-weight:600;font-size:14px;font-family:'Century Gothic';padding-left:20px;padding-right:181px;padding-top:4px;padding-bottom:4px; width:100%; color: white; text-align: left; background:transparent; }");
 
     //QToolBar *toolbar2 = addToolBar(tr("Actions toolbar"));
@@ -489,11 +524,25 @@ void BitcoinGUI::setNumConnections(int count)
     QString icon;
     switch(count)
     {
-    case 0: icon = ":/icons/connect_0"; break;
-    case 1: case 2: case 3: icon = ":/icons/connect_1"; break;
-    case 4: case 5: case 6: icon = ":/icons/connect_2"; break;
-    case 7: case 8: case 9: icon = ":/icons/connect_3"; break;
-    default: icon = ":/icons/connect_4"; break;
+    case 0:
+        icon = ":/icons/connect_0";
+        break;
+    case 1:
+        icon = ":/icons/connect_1";
+        break;
+    case 2:
+    case 3:
+    case 4:
+        icon = ":/icons/connect_2";
+        break;
+    case 5:
+    case 6:
+    case 7:
+        icon = ":/icons/connect_3";
+        break;
+    default:
+        icon = ":/icons/connect_4";
+        break;
     }
     labelConnectionsIcon->setPixmap(QIcon(icon).pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
     labelConnectionsIcon->setToolTip(tr("%n active connection(s) to UltraCoin network", "", count));
@@ -936,4 +985,83 @@ void BitcoinGUI::showNormalIfMinimized(bool fToggleHidden)
 void BitcoinGUI::toggleHidden()
 {
     showNormalIfMinimized(true);
+}
+
+void BitcoinGUI::updateStakingIcon()
+{
+    uint64 nMinWeight = 0;
+    uint64 nMaxWeight = 0;
+    uint64 nWeight = 0;
+    uint64 nHoursToMaturity = 0;
+
+    if (pwalletMain)
+        pwalletMain->GetStakeWeight(*pwalletMain, nMinWeight, nMaxWeight, nWeight, nHoursToMaturity);
+
+    if (nLastCoinStakeSearchInterval && nWeight && !pwalletMain->IsLocked() && fWalletUnlockMintOnly)
+    {
+        uint64_t nNetworkWeight = GetPoSKernelPS();
+        unsigned nEstimateTime = nStakeTargetSpacing2 * nNetworkWeight / nWeight;
+
+        QString text;
+        if (nEstimateTime < 60)
+        {
+            text = tr("%n second(s)", "", nEstimateTime);
+        }
+        else if (nEstimateTime < 60*60)
+        {
+            text = tr("%n minute(s)", "", nEstimateTime/60);
+        }
+        else if (nEstimateTime < 24*60*60)
+        {
+            text = tr("%n hour(s)", "", nEstimateTime/(60*60));
+        }
+        else
+        {
+            text = tr("%n day(s)", "", nEstimateTime/(60*60*24));
+        }
+
+        labelStakingIcon->setMovie(stakingIconMovie);
+        stakingIconMovie->start();
+        labelStakingIcon->setToolTip(tr("Staking.<br>Your weight is %1<br>Network weight is %2<br>Expected time to earn reward is %3").arg(nWeight).arg(nNetworkWeight).arg(text));
+    }
+    else
+    {
+        // notify user if they have mature coins or when the next block matures. --ofeefee
+        if (!progressBarLabel->isVisible())
+        {
+
+            if (nWeight > 0)
+                statusBar()->showMessage(tr("You have mature coins ready for staking."),30*1000);
+
+            if (nHoursToMaturity > 0)
+            {
+                if (nHoursToMaturity > 24)
+                    statusBar()->showMessage(tr("Next block matures in %1 days.").arg(nHoursToMaturity/24),30*1000);
+                else
+                    statusBar()->showMessage(tr("Next block matures in %1 hours.").arg(nHoursToMaturity),30*1000);
+            }
+
+        }
+        labelStakingIcon->setPixmap(QIcon(":/icons/staking_off").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
+        if (pwalletMain && pwalletMain->IsLocked())
+            labelStakingIcon->setToolTip(tr("Not staking because wallet is locked"));
+        else if (vNodes.empty())
+            labelStakingIcon->setToolTip(tr("Not staking because wallet is offline"));
+        else if (IsInitialBlockDownload())
+            labelStakingIcon->setToolTip(tr("Not staking because wallet is syncing"));
+        else if (!nWeight)
+             labelStakingIcon->setToolTip(tr("Not staking because you don't have mature coins"));
+        else
+            labelStakingIcon->setToolTip(tr("Not staking"));
+    }
+}
+
+void BitcoinGUI::websiteClicked()
+{
+    QDesktopServices::openUrl(QUrl("http://ultracoin.net", QUrl::TolerantMode));
+}
+
+void BitcoinGUI::forumClicked()
+{
+    QDesktopServices::openUrl(QUrl("http://ultracointalk.org", QUrl::TolerantMode));
 }

@@ -54,6 +54,7 @@ public:
     void setModel(ClientModel *clientModel,WalletModel *walletModel);
 public slots:
     void startPressed();
+    void clearLogPressed();
 
     void startPoolMining();
     void stopPoolMining();

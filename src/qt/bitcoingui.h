@@ -68,6 +68,7 @@ private:
     SendCoinsDialog *sendCoinsPage;
     SignVerifyMessageDialog *signVerifyMessageDialog;
 
+    QLabel *labelStakingIcon;
     QLabel *labelEncryptionIcon;
 	QLabel *labelMiningIcon;
     QLabel *labelConnectionsIcon;
@@ -95,12 +96,16 @@ private:
     QAction *aboutQtAction;
     QAction *openRPCConsoleAction;
 
+    QAction *websiteAction;
+    QAction *forumAction;
+
     QSystemTrayIcon *trayIcon;
     Notificator *notificator;
     TransactionView *transactionView;
     RPCConsole *rpcConsole;
 
     QMovie *syncIconMovie;
+    QMovie *stakingIconMovie;
 
     /** Create the main UI actions. */
     void createActions();
@@ -182,6 +187,10 @@ private slots:
     void showNormalIfMinimized(bool fToggleHidden = false);
     /** simply calls showNormalIfMinimized(true) for use in SLOT() macro */
     void toggleHidden();
+
+    void updateStakingIcon();
+    void websiteClicked();
+    void forumClicked();
 };
 
 #endif

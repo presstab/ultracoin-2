@@ -836,8 +836,8 @@ Address: %4
     </message>
     <message>
         <location line="-103"/>
-        <source>pool.ultracoin.com</source>
-        <translation>pool.ultracoin.com</translation>
+        <source>pool.ultracoin.net</source>
+        <translation>pool.ultracoin.net</translation>
     </message>
     <message>
         <location line="+57"/>
@@ -887,8 +887,8 @@ Address: %4
     </message>
     <message>
         <location line="-244"/>
-        <source>9332</source>
-        <translation>9332</translation>
+        <source>4242</source>
+        <translation>4242</translation>
     </message>
     <message>
         <location filename="../miningpage.cpp" line="-324"/>

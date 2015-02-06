@@ -13,7 +13,9 @@
 #include "txdb.h"
 
 using namespace std;
-extern int nStakeMaxAge;
+
+extern unsigned int nStakeMinAge;
+extern unsigned int nStakeMaxAge;
 bool fCoinsDataActual = false;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1037,6 +1039,29 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
     }
 }
 
+void CWallet::AvailableCoinsMinConf(std::vector<COutput>& vCoins, int nConf) const
+{
+    vCoins.clear();
+
+    {
+        LOCK(cs_wallet);
+        for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+        {
+            const CWalletTx* pcoin = &(*it).second;
+
+            if (!pcoin->IsFinal())
+                continue;
+
+            if(pcoin->GetDepthInMainChain() < nConf)
+                continue;
+
+            for (unsigned int i = 0; i < pcoin->vout.size(); i++)
+                if (!(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) && pcoin->vout[i].nValue >= MIN_TXOUT_AMOUNT)
+                    vCoins.push_back(COutput(pcoin, i, pcoin->GetDepthInMainChain()));
+        }
+    }
+}
+
 static void ApproximateBestSubset(vector<pair<int64, pair<const CWalletTx*,unsigned int> > >vValue, int64 nTotalLower, int64 nTargetValue,
                                   vector<char>& vfBest, int64& nBest, int iterations = 1000)
 {
@@ -1228,7 +1253,49 @@ bool CWallet::SelectCoins(int64 nTargetValue, unsigned int nSpendTime, set<pair<
             SelectCoinsMinConf(nTargetValue, nSpendTime, 0, 1, vCoins, setCoinsRet, nValueRet));
 }
 
+// Select some coins without random shuffle or best subset approximation
+bool CWallet::SelectCoinsSimple(int64 nTargetValue, unsigned int nSpendTime, int nMinConf, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const
+{
+    vector<COutput> vCoins;
+    AvailableCoinsMinConf(vCoins, nMinConf);
 
+    setCoinsRet.clear();
+    nValueRet = 0;
+
+    BOOST_FOREACH(COutput output, vCoins)
+    {
+        const CWalletTx *pcoin = output.tx;
+        int i = output.i;
+
+        // Stop if we've chosen enough inputs
+        if (nValueRet >= nTargetValue)
+            break;
+
+        // Follow the timestamp rules
+        if (pcoin->nTime > nSpendTime)
+            continue;
+
+        int64 n = pcoin->vout[i].nValue;
+
+        pair<int64,pair<const CWalletTx*,unsigned int> > coin = make_pair(n,make_pair(pcoin, i));
+
+        if (n >= nTargetValue)
+        {
+            // If input value is greater or equal to target then simply insert
+            //    it into the current subset and exit
+            setCoinsRet.insert(coin.second);
+            nValueRet += coin.first;
+            break;
+        }
+        else if (n < nTargetValue + CENT)
+        {
+            setCoinsRet.insert(coin.second);
+            nValueRet += coin.first;
+        }
+    }
+
+    return true;
+}
 
 
 bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, const CCoinControl* coinControl)
@@ -2258,4 +2325,105 @@ void CWallet::ClearOrphans()
 
     for(list<uint256>::const_iterator it = orphans.begin(); it != orphans.end(); ++it)
         EraseFromWallet(*it);
+}
+
+// FlutterCoin: get current stake weight
+bool CWallet::GetStakeWeight(const CKeyStore& keystore, uint64& nMinWeight, uint64& nMaxWeight, uint64& nWeight, uint64& nHoursToMaturity)
+{
+    // Choose coins to use
+    int64 nBalance = GetBalance();
+    int64 nReserveBalance = 0;
+
+    if (mapArgs.count("-reservebalance") && !ParseMoney(mapArgs["-reservebalance"], nReserveBalance))
+    {
+        error("GetStakeWeight : invalid reserve balance amount");
+        return false;
+    }
+
+    if (nBalance <= nReserveBalance)
+        return false;
+
+    vector<const CWalletTx*> vwtxPrev;
+
+/*
+ * TODO: performance comparison
+
+    static set<pair<const CWalletTx*,unsigned int> > setCoins;
+    static uint256 hashPrevBlock;
+    static int64 nValueIn = 0;
+
+    // Cache outputs unless best block changed
+    if (hashPrevBlock != pindexBest->GetBlockHash())
+    {
+        if (!SelectCoinsSimple(nBalance - nReserveBalance, GetAdjustedTime(), nCoinbaseMaturity * 10, setCoins, nValueIn))
+            return false;
+
+        if (setCoins.empty())
+            return false;
+
+        hashPrevBlock == pindexBest->GetBlockHash();
+    }
+*/
+
+    set<pair<const CWalletTx*,unsigned int> > setCoins;
+    int64 nValueIn = 0;
+
+    if (!SelectCoinsSimple(nBalance - nReserveBalance, GetTime(), nCoinbaseMaturity * 10, setCoins, nValueIn))
+        return false;
+
+    if (setCoins.empty())
+        return false;
+
+    // variables for next stake calculation
+    uint64 nPrevAge = 0;
+    uint64 nStakeAge = nStakeMinAge; //60 * 60 * 24 * 30; // 30 day maturity
+
+    CTxDB txdb("r");
+    BOOST_FOREACH(PAIRTYPE(const CWalletTx*, unsigned int) pcoin, setCoins)
+    {
+        CTxIndex txindex;
+        {
+            LOCK2(cs_main, cs_wallet);
+            if (!txdb.ReadTxIndex(pcoin.first->GetHash(), txindex))
+                continue;
+        }
+
+        int64 nTimeWeight = GetWeight((int64)pcoin.first->nTime, (int64)GetTime());
+        CBigNum bnCoinDayWeight = CBigNum(pcoin.first->vout[pcoin.second].nValue) * nTimeWeight / COIN / (24 * 60 * 60);
+
+        // Weight is greater than zero
+        if (nTimeWeight > 0)
+        {
+            nWeight += bnCoinDayWeight.getuint64();
+        }
+
+        if (nWeight == 0)
+        {
+            // Time Until Next Maturity --presstab HyperStake
+            uint64 nCurrentAge = (int64)GetTime() - (int64)pcoin.first->nTime;
+            if (nCurrentAge > nPrevAge)
+            {
+               nPrevAge = nCurrentAge;
+               nHoursToMaturity = ((nStakeAge - nPrevAge) / 60 / 60);
+            }
+        }
+
+        // Weight is greater than zero, but the maximum value isn't reached yet
+        if (nTimeWeight > 0 && nTimeWeight < nStakeMaxAge)
+        {
+            nMinWeight += bnCoinDayWeight.getuint64();
+        }
+
+        // Maximum weight was reached
+        if (nTimeWeight == nStakeMaxAge)
+        {
+            nMaxWeight += bnCoinDayWeight.getuint64();
+        }
+    }
+
+    // fix nHoursToMaturity when nWeight found
+    if (nWeight > 0)
+        nHoursToMaturity = 0;
+
+    return true;
 }

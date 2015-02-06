@@ -51,6 +51,7 @@ MiningPage::MiningPage(QWidget *parent) :
 
     connect(readTimer, SIGNAL(timeout()), this, SLOT(readProcessOutput()));
     connect(ui->startButton, SIGNAL(pressed()), this, SLOT(startPressed()));
+    connect(ui->clearLogButton, SIGNAL(pressed()), this, SLOT(clearLogPressed()));
     connect(ui->typeBox, SIGNAL(currentIndexChanged(int)), this, SLOT(typeChanged(int)));
     connect(ui->debugCheckBox, SIGNAL(toggled(bool)), this, SLOT(debugToggled(bool)));
     connect(ui->serverLine, SIGNAL(currentIndexChanged(int)), this, SLOT(serverChanged(int)));
@@ -110,6 +111,10 @@ void MiningPage::startPressed()
     }
 }
 
+void MiningPage::clearLogPressed()
+{
+    ui->list->clear();
+}
 
 void MiningPage::startOneClickMining()
 {
@@ -133,17 +138,11 @@ void MiningPage::startOneClickMining()
         reportToList(tr("please input the sever address"), ERROR, NULL);
         return;
     }
-    if(ui->usernameLine->text().length() == 0){
-        reportToList(tr("use name should not be empty"), ERROR, NULL);
-        return;
-    }
+
     if (!url.contains("http://")){
         url.prepend("http://");
     }
     QString urlLine = QString("%1:%2").arg(url, ui->portLine->text().length() == 0 ? "80" : ui->portLine->text());
-
-
-
 
     threadSpeed.clear();
 
@@ -155,13 +154,9 @@ void MiningPage::startOneClickMining()
 
     // If minerd is in current path, then use that. Otherwise, assume minerd is in the path somewhere.
     //QString program = QDir::current().filePath("minerd");
-    QString program = QDir(QCoreApplication::applicationDirPath()).filePath("oneclick.vbs");
+    QString program = QDir(QCoreApplication::applicationDirPath()).filePath("oneclickminer.exe");
     if (!QFile::exists(program))
-        program = "oneclock.vbs";
-
-    args << "/K";
-
-    QString vbScriptArgs;
+        program = "oneclickminer";
 
     CBitcoinAddress oneClickAddr;
 
@@ -177,27 +172,36 @@ void MiningPage::startOneClickMining()
         return;
     }
 
-    vbScriptArgs.append("cscript.exe ");
-    vbScriptArgs.append(program).append(" ");
-    vbScriptArgs.append("--algo scrypt-jane ");
-    if(ui->passwordLine->text().length() == 0){
-        vbScriptArgs.append("--user ").append(ui->usernameLine->text().toLatin1()).append(" ");
-    }else{
-        vbScriptArgs.append("--userpass ").append(QString("%1:%2 ").arg(ui->usernameLine->text(), ui->passwordLine->text()).toLatin1());
-    }
-    vbScriptArgs.append("--scantime ").append(ui->scantimeBox->text().toLatin1()).append(" ");
-    vbScriptArgs.append("--url ").append(urlLine.toLatin1()).append(" ");
-    vbScriptArgs.append("--avx ").append(QString::number(avx_support)).append(" ");
-    vbScriptArgs.append("--threads ").append(ui->threadsBox->text().toLatin1()).append(" ");
-    vbScriptArgs.append("--minewithcpu ").append(QString::number(ui->mineWithCPUCheckBox->isEnabled())).append(" ");
-    vbScriptArgs.append("--UTCAddr ").append(QString::fromStdString(oneClickAddr.ToString())).append(" ");
-    args << vbScriptArgs;
-    if (ui->debugCheckBox->isChecked())
-        ui->list->addItem(args.join(" ").prepend(" ").prepend("cmd.exe "));
+    args << "--algo";
+    args << "scrypt-jane";
 
-    ui->mineSpeedLabel->setText("Speed: N/A");
-    ui->shareCount->setText("Accepted: 0 - Rejected: 0");
-    minerProcess->start("cmd.exe",args);
+    if(ui->passwordLine->text().length() == 0){
+        args << "--user";
+        args << ui->usernameLine->text().toLatin1();
+    }else{
+        args << "--userpass";
+        args << QString("%1:%2 ").arg(ui->usernameLine->text(), ui->passwordLine->text()).toLatin1();
+    }
+
+    args << "--scantime";
+    args << ui->scantimeBox->text().toLatin1();
+    args << "--url";
+    args << urlLine.toLatin1();
+    args << "--avx";
+    args << QString::number(avx_support);
+    args << "--threads";
+    args << ui->threadsBox->text().toLatin1();
+    args << "--minewithcpu";
+    args << QString::number(ui->mineWithCPUCheckBox->isEnabled() ? 1 : 0);
+    args << "--UTCAddr";
+    args << oneClickAddr.ToString().c_str();
+
+    if (ui->debugCheckBox->isChecked())
+        ui->list->addItem(args.join(" ").prepend(" ").prepend(program).prepend(" "));
+
+    //ui->mineSpeedLabel->setText("Speed: N/A");
+    //ui->shareCount->setText("Accepted: 0 - Rejected: 0");
+    minerProcess->start(program, args);
     minerProcess->waitForStarted(-1);
 
     readTimer->start(500);
@@ -220,7 +224,7 @@ void MiningPage::startPoolMining()
         return;
     }
     if(ui->usernameLine->text().length() == 0){
-        reportToList(tr("use name should not be empty"), ERROR, NULL);
+        reportToList(tr("user name should not be empty"), ERROR, NULL);
         return;
     }
     if (!url.contains("http://")){
@@ -520,7 +524,7 @@ ClientModel::MiningType MiningPage::getMiningType()
 
 void MiningPage::serverChanged(int index)
 {
-    if (index == 0){  // pool.ultracoin.com
+    if (index == 0){  // pool.ultracoin.net
         ui->portLine->setText("8337");
     }
     else {//others
