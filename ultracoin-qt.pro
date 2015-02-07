@@ -22,8 +22,8 @@ iphone:DEPSDIR=/ios/ios-universal
 
 macx:QMAKE_CXXFLAGS += -stdlib=libc++
 USE_LEVELDB=1
-USE_UPNP=1
-USE_QRCODE=1
+USE_UPNP=0
+USE_QRCODE=0
 
 # for boost 1.37, add -mt to the boost libraries
 # use: qmake BOOST_LIB_SUFFIX=-mt
@@ -424,8 +424,8 @@ SOURCES += \
     src/scrypt-x86_64.S 
 }
 
-android:SOURCES += src/scrypt-arm.S src/ifaddrs.c
-android:HEADERS += src/ifaddrs.h
+android:SOURCES += src/scrypt-arm.S src/compat/ifaddrs.c
+android:HEADERS += src/compat/ifaddrs.h
 
 RESOURCES += \
     src/qt/bitcoin.qrc

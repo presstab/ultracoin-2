@@ -27,7 +27,11 @@
 #include <netdb.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#ifdef __arm__
+#include "compat/ifaddrs.h"
+#else
 #include <ifaddrs.h>
+#endif
 #endif
 #ifndef __MINGW64__
 typedef u_int SOCKET;
