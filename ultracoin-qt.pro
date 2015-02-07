@@ -23,7 +23,7 @@ iphone:DEPSDIR=/ios/ios-universal
 macx:QMAKE_CXXFLAGS += -stdlib=libc++
 USE_LEVELDB=1
 USE_UPNP=0
-USE_QRCODE=0
+USE_QRCODE=1
 
 # for boost 1.37, add -mt to the boost libraries
 # use: qmake BOOST_LIB_SUFFIX=-mt
@@ -100,6 +100,8 @@ contains(RELEASE, 1) {
 !win32 {
 # for extra security against potential buffer overflows: enable GCCs Stack Smashing Protection
 QMAKE_CXXFLAGS *= -fstack-protector-all --param ssp-buffer-size=1
+android:QMAKE_CXXFLAGS += -static
+
 QMAKE_LFLAGS *= -fstack-protector-all --param ssp-buffer-size=1
 
 # We need to exclude this for Windows cross compile with MinGW 4.2.x, as it will result in a non-working executable!
@@ -113,7 +115,8 @@ win32:QMAKE_LFLAGS += -Wl,--dynamicbase -Wl,--nxcompat
 contains(USE_QRCODE, 1) {
     message(Building with QRCode support)
     DEFINES += USE_QRCODE
-    LIBS += -lqrencode
+    !android:LIBS += -lqrencode -lpng
+    android:LIBS += /android/arm-gcc-4.6/lib/libqrencode.a /android/arm-gcc-4.6/lib/libpng.a
 }
 
 # use: qmake "USE_UPNP=1" ( enabled by default; default)
@@ -561,7 +564,7 @@ macx:LIBS += -L$$PWD/src/leveldb -lleveldb
 win32:LIBS += -lboost_chrono$$BOOST_LIB_SUFFIX -lpthread
 
 contains(RELEASE, 1) {
-    !windows:!macx {
+    !windows:!macx:!android {
         # Linux: turn dynamic linking back on for c/c++ runtime libraries
         LIBS += -Wl,-Bdynamic
     }
