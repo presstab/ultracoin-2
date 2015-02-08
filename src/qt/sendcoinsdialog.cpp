@@ -27,11 +27,14 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
-#ifdef Q_OS_MAC // Icons on push buttons are very uncommon on Mac
+#ifdef __arm__  // Icons on push buttons are very uncommon on Android
     ui->addButton->setIcon(QIcon());
     ui->clearButton->setIcon(QIcon());
+    ui->toggleCoinControlButton->setIcon(QIcon());
     ui->sendButton->setIcon(QIcon());
 #endif
+
+    ui->toggleCoinControlButton->setVisible(ui->checkBoxCoinControlChange->isChecked());
 
 #if QT_VERSION >= 0x040700
     /* Do not move this to the XML file, Qt before 4.7 will choke on it */
@@ -42,6 +45,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
 
     connect(ui->addButton, SIGNAL(clicked()), this, SLOT(addEntry()));
     connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clear()));
+    connect(ui->toggleCoinControlButton, SIGNAL(clicked()), this, SLOT(toggleCoinControl()));
 
     // Coin Control
     ui->lineEditCoinControlChange->setFont(GUIUtil::bitcoinAddressFont());
@@ -428,9 +432,14 @@ void SendCoinsDialog::coinControlClipboardChange()
 void SendCoinsDialog::coinControlFeatureChanged(bool checked)
 {
     ui->frameCoinControl->setVisible(checked);
-    
+    ui->frameCoinControl->setVisible(checked);
     if (!checked && model) // coin control features disabled
         CoinControlDialog::coinControl->SetNull();
+}
+
+void SendCoinsDialog::toggleCoinControl()
+{
+    ui->frameCoinControl->setVisible(!ui->frameCoinControl->isVisible());
 }
 
 // Coin Control: button inputs -> show actual coin control dialog

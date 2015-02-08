@@ -76,7 +76,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     notificator(0),
     rpcConsole(0)
 {
-    resize(850, 550);
+    resize(850, 480);
     setWindowTitle(tr("UltraCoin") + " - " + tr("Wallet"));
 #ifndef Q_OS_MAC
     qApp->setWindowIcon(QIcon(":icons/bitcoin"));
@@ -367,7 +367,9 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(receiveCoinsAction);
     toolbar->addAction(historyAction);
     toolbar->addAction(addressBookAction);
+#ifndef __arm__
     toolbar->addAction(miningAction);
+#endif
     QWidget* spacer = new QWidget();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     toolbar->addWidget(spacer);
@@ -375,8 +377,11 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(exportAction);
     toolbar->addAction(forumAction);
     toolbar->addAction(websiteAction);
-    toolbar->setStyleSheet("#toolbar { font-weight:600;border:none;height:100%;padding-top:20px; background: rgb(98, 166, 74); text-align: left; color: white;min-width:180px;max-width:180px;} QToolBar QToolButton:hover {background:rgb(80, 192, 80);} QToolBar QToolButton:checked {background:rgba(24, 64, 33, 100);}  QToolBar QToolButton { font-weight:600;font-size:14px;font-family:'Century Gothic';padding-left:20px;padding-right:181px;padding-top:4px;padding-bottom:4px; width:100%; color: white; text-align: left; background:transparent; }");
-
+#ifndef MAC_OSX
+    toolbar->setStyleSheet("#toolbar { font-weight:600;border:none;height:100%;padding-top:20px; background: rgb(98, 166, 74); text-align: left; color: white;min-width:180px;max-width:24sudo0px;} QToolBar QToolButton:hover {background:rgb(80, 192, 80);} QToolBar QToolButton:checked {background:rgba(24, 64, 33, 100);}  QToolBar QToolButton { font-weight:600;font-size:24px;font-family:'Century Gothic';padding-left:20px;padding-right:181px;padding-top:4px;padding-bottom:4px; width:100%; color: white; text-align: left; background:transparent; }");
+#else
+    toolbar->setStyleSheet("#toolbar { font-weight:600;border:none;height:100%;padding-top:20px; background: rgb(98, 166, 74); text-align: left; color: white;min-width:180px;max-width:24sudo0px;} QToolBar QToolButton:hover {background:rgb(80, 192, 80);} QToolBar QToolButton:checked {background:rgba(24, 64, 33, 100);}  QToolBar QToolButton { font-weight:600;font-size:18px;font-family:'Helvetica';padding-left:16px;padding-right:181px;padding-top:4px;padding-bottom:4px; width:100%; color: white; text-align: left; background:transparent; }");
+#endif
     //QToolBar *toolbar2 = addToolBar(tr("Actions toolbar"));
     //toolbar2->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     //toolbar2->addAction(exportAction);

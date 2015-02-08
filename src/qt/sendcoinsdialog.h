@@ -35,6 +35,7 @@ public:
 
 public slots:
     void clear();
+    void toggleCoinControl();
     void reject();
     void accept();
     SendCoinsEntry *addEntry();

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1000</width>
-    <height>500</height>
+    <width>865</width>
+    <height>360</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -379,7 +379,7 @@
         <height>41</height>
        </rect>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayoutPanel" stretch="0,0,0,0,0">
+      <layout class="QHBoxLayout" name="horizontalLayoutPanel" stretch="0,0,0,0">
        <property name="spacing">
         <number>14</number>
        </property>
@@ -425,14 +425,6 @@
          </property>
         </widget>
        </item>
-<!--       <item>
-        <widget class="QLabel" name="labelLocked">
-         <property name="text">
-          <string>(1 locked)</string>
-         </property>
-        </widget>
-       </item>
--->
        <item>
         <spacer name="horizontalSpacer">
          <property name="orientation">
