@@ -8,7 +8,11 @@ static const int MODEL_UPDATE_DELAY = 500;
 static const int MAX_PASSPHRASE_SIZE = 1024;
 
 /* BitcoinGUI -- Size of icons in status bar */
+#ifdef __arm__
+static const int STATUSBAR_ICONSIZE = 32;
+#else
 static const int STATUSBAR_ICONSIZE = 16;
+#endif
 
 /* Invalid field background style */
 #define STYLE_INVALID "background:#FF8080"

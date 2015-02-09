@@ -133,11 +133,11 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     // Status bar notification icons
     QFrame *frameBlocks = new QFrame();
     frameBlocks->setContentsMargins(0,0,0,0);
-    frameBlocks->setMinimumWidth(56);
-    frameBlocks->setMaximumWidth(96);
+    frameBlocks->setMinimumWidth((STATUSBAR_ICONSIZE + 2) * 5);
+    frameBlocks->setMaximumWidth((STATUSBAR_ICONSIZE + 5) * 5);
     QHBoxLayout *frameBlocksLayout = new QHBoxLayout(frameBlocks);    
     frameBlocksLayout->setContentsMargins(3,0,3,0);
-    frameBlocksLayout->setSpacing(3);
+    frameBlocksLayout->setSpacing(4);
     labelEncryptionIcon = new QLabel();
     labelStakingIcon = new QLabel();
 	labelMiningIcon = new QLabel();
@@ -168,15 +168,17 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     QString curStyle = qApp->style()->metaObject()->className();
     if(curStyle == "QWindowsStyle" || curStyle == "QWindowsXPStyle")
     {
-        progressBar->setStyleSheet("QProgressBar { background-color: #e8e8e8; border: 1px solid grey; border-radius: 7px; padding: 1px; text-align: center; } QProgressBar::chunk { background: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #FF8000, stop: 1 orange); border-radius: 7px; margin: 0px; }");
+        progressBar->setStyleSheet("QProgressBar { font-size:18px;font-family:'Helvetica'; background-color: #e8e8e8; border: 1px solid grey; border-radius: 7px; padding: 1px; text-align: center; } QProgressBar::chunk { background: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #FF8000, stop: 1 orange); border-radius: 7px; margin: 0px; }");
     }
 
     statusBar()->addWidget(progressBarLabel);
-    statusBar()->addWidget(progressBar);
+    statusBar()->addWidget(progressBar, 2);
     statusBar()->addPermanentWidget(frameBlocks);
 
     syncIconMovie = new QMovie(":/movies/update_spinner", "mng", this);
+    syncIconMovie->setScaledSize(QSize(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
     stakingIconMovie = new QMovie(":/movies/staking_spinner", "mng", this);
+    stakingIconMovie->setScaledSize(QSize(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
 
     QTimer *timerStakingIcon = new QTimer(labelStakingIcon);
     connect(timerStakingIcon, SIGNAL(timeout()), this, SLOT(updateStakingIcon()));
@@ -358,7 +360,11 @@ void BitcoinGUI::createToolBars()
     toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     toolbar->setMovable(false);
     toolbar->setOrientation(Qt::Vertical);
+#ifdef __arm__
+    toolbar->setIconSize(QSize(50, 32));
+#else
     toolbar->setIconSize(QSize(50, 20));
+#endif
     mylabel->setObjectName("logo");
     mylabel->setStyleSheet("#logo { background: rgb(255,255,255); }");
     toolbar->addWidget(mylabel);
@@ -377,8 +383,9 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(exportAction);
     toolbar->addAction(forumAction);
     toolbar->addAction(websiteAction);
-#ifndef MAC_OSX
-    toolbar->setStyleSheet("#toolbar { font-weight:600;border:none;height:100%;padding-top:20px; background: rgb(98, 166, 74); text-align: left; color: white;min-width:180px;max-width:24sudo0px;} QToolBar QToolButton:hover {background:rgb(80, 192, 80);} QToolBar QToolButton:checked {background:rgba(24, 64, 33, 100);}  QToolBar QToolButton { font-weight:600;font-size:24px;font-family:'Century Gothic';padding-left:20px;padding-right:181px;padding-top:4px;padding-bottom:4px; width:100%; color: white; text-align: left; background:transparent; }");
+
+#ifdef __arm__
+    toolbar->setStyleSheet("#toolbar { font-weight:600;border:none;height:100%;padding-top:20px; background: rgb(98, 166, 74); text-align: left; color: white;min-width:220px;max-width:24sudo0px;} QToolBar QToolButton:hover {background:rgb(80, 192, 80);} QToolBar QToolButton:checked {background:rgba(24, 64, 33, 100);}  QToolBar QToolButton { font-weight:600;font-size:24px;font-family:'Century Gothic';padding-left:22px;padding-right:192px;padding-top:4px;padding-bottom:4px; width:100%; color: white; text-align: left; background:transparent; }");
 #else
     toolbar->setStyleSheet("#toolbar { font-weight:600;border:none;height:100%;padding-top:20px; background: rgb(98, 166, 74); text-align: left; color: white;min-width:180px;max-width:24sudo0px;} QToolBar QToolButton:hover {background:rgb(80, 192, 80);} QToolBar QToolButton:checked {background:rgba(24, 64, 33, 100);}  QToolBar QToolButton { font-weight:600;font-size:18px;font-family:'Helvetica';padding-left:16px;padding-right:181px;padding-top:4px;padding-bottom:4px; width:100%; color: white; text-align: left; background:transparent; }");
 #endif
@@ -549,7 +556,7 @@ void BitcoinGUI::setNumConnections(int count)
         icon = ":/icons/connect_4";
         break;
     }
-    labelConnectionsIcon->setPixmap(QIcon(icon).pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
+    labelConnectionsIcon->setPixmap(QIcon(icon).pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE).scaled(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE, Qt::IgnoreAspectRatio, Qt::FastTransformation));
     labelConnectionsIcon->setToolTip(tr("%n active connection(s) to UltraCoin network", "", count));
 }
 
@@ -631,7 +638,7 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
     if(secs < 90*60 && count >= nTotalBlocks)
     {
         tooltip = tr("Up to date") + QString(".<br>") + tooltip;
-        labelBlocksIcon->setPixmap(QIcon(":/icons/synced").pixmap(STATUSBAR_ICONSIZE, STATUSBAR_ICONSIZE));
+        labelBlocksIcon->setPixmap(QIcon(":/icons/synced").pixmap(STATUSBAR_ICONSIZE, STATUSBAR_ICONSIZE).scaled(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE, Qt::IgnoreAspectRatio, Qt::FastTransformation));
 
         overviewPage->showOutOfSyncWarning(false);
     }
@@ -662,12 +669,12 @@ void BitcoinGUI::setMining(bool mining, int hashrate)
 {
     if (mining)
     {
-        labelMiningIcon->setPixmap(QIcon(":/icons/mining_active").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
+        labelMiningIcon->setPixmap(QIcon(":/icons/mining_active").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE).scaled(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE, Qt::IgnoreAspectRatio, Qt::FastTransformation));
         labelMiningIcon->setToolTip(tr("Mining UltraCoins at %1 hashes per second").arg(hashrate));
     }
     else
     {
-        labelMiningIcon->setPixmap(QIcon(":/icons/mining_inactive").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
+        labelMiningIcon->setPixmap(QIcon(":/icons/mining_inactive").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE).scaled(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE, Qt::IgnoreAspectRatio, Qt::FastTransformation));
         labelMiningIcon->setToolTip(tr("Not mining UltraCoins"));
     }
 }
@@ -891,7 +898,7 @@ void BitcoinGUI::setEncryptionStatus(int status)
         break;
     case WalletModel::Unlocked:
         labelEncryptionIcon->show();
-        labelEncryptionIcon->setPixmap(QIcon(":/icons/lock_open").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
+        labelEncryptionIcon->setPixmap(QIcon(":/icons/lock_open").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE).scaled(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE, Qt::IgnoreAspectRatio, Qt::FastTransformation));
         labelEncryptionIcon->setToolTip(fWalletUnlockMintOnly? tr("Wallet is <b>encrypted</b> and currently <b>unlocked for block minting only</b>") : tr("Wallet is <b>encrypted</b> and currently <b>unlocked</b>"));
         encryptWalletAction->setChecked(true);
         changePassphraseAction->setEnabled(true);
@@ -899,7 +906,7 @@ void BitcoinGUI::setEncryptionStatus(int status)
         break;
     case WalletModel::Locked:
         labelEncryptionIcon->show();
-        labelEncryptionIcon->setPixmap(QIcon(":/icons/lock_closed").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
+        labelEncryptionIcon->setPixmap(QIcon(":/icons/lock_closed").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE).scaled(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE, Qt::IgnoreAspectRatio, Qt::FastTransformation));
         labelEncryptionIcon->setToolTip(tr("Wallet is <b>encrypted</b> and currently <b>locked</b>"));
         encryptWalletAction->setChecked(true);
         changePassphraseAction->setEnabled(true);
@@ -1047,7 +1054,7 @@ void BitcoinGUI::updateStakingIcon()
             }
 
         }
-        labelStakingIcon->setPixmap(QIcon(":/icons/staking_off").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
+        labelStakingIcon->setPixmap(QIcon(":/icons/staking_off").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE).scaled(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE, Qt::IgnoreAspectRatio, Qt::FastTransformation));
         if (pwalletMain && pwalletMain->IsLocked())
             labelStakingIcon->setToolTip(tr("Not staking because wallet is locked"));
         else if (vNodes.empty())

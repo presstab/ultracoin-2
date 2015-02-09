@@ -95,7 +95,7 @@ private:
 signals:
     void numConnectionsChanged(int count);
     void numBlocksChanged(int count, int countOfPeers);
-	void miningChanged(bool mining, int count);
+    void miningChanged(bool mining, int count);
 
     //! Asynchronous error notification
     void error(const QString &title, const QString &message, bool modal);

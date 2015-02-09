@@ -173,6 +173,7 @@ double ClientModel::GetDifficulty() const
 
     return dDiff;
 }
+
 QDateTime ClientModel::getLastBlockDate() const
 {
     return QDateTime::fromTime_t(pindexBest->GetBlockTime());
