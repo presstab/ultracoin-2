@@ -346,8 +346,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/txdb-leveldb.h \
     src/txdb.h \
     src/scrypt-arm.S \
-    src/qt/bootstrapdialog.h \
-    src/streams.h
+    src/qt/bootstrapdialog.h 
 
 SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/qt/transactiontablemodel.cpp \
