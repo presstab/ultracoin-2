@@ -14,13 +14,13 @@
 #define DISPLAY_VERSION_MAJOR         0
 #define DISPLAY_VERSION_MINOR        7
 #define DISPLAY_VERSION_REVISION        3
-#define DISPLAY_VERSION_BUILD         3
+#define DISPLAY_VERSION_BUILD         4
 
-#define APP_VERSION      "0.7.3.3"
-#define APP_VERSION_RC   0,7,3,3
-#define APP_REVISION     "21-g19b453a"
-#define APP_NAME         "libultracoin-qt.so"
-#define APP_TIME         1418613644
+#define APP_VERSION      "0.7.3.4"
+#define APP_VERSION_RC   0,7,3,4
+#define APP_REVISION     "1-ge93ebb2"
+#define APP_NAME         "ultracoin-qt"
+#define APP_TIME         1423499562
 
 static const int CLIENT_VERSION =
                            1000000 * CLIENT_VERSION_MAJOR
@@ -36,10 +36,10 @@ extern const std::string CLIENT_DATE;
 // network protocol versioning
 //
 
-static const int PROTOCOL_VERSION = 70056;
+static const int PROTOCOL_VERSION = 70057;
 
 // earlier versions not supported as of Feb 2012, and are disconnected
-static const int MIN_PROTO_VERSION = 70050;
+static const int MIN_PROTO_VERSION = 70056;
 
 // nTime field added to CAddress, starting with this version;
 // if possible, avoid requesting addresses nodes older than this
