@@ -22,7 +22,7 @@ iphone:DEPSDIR=/ios/ios-universal
 
 macx:QMAKE_CXXFLAGS += -stdlib=libc++
 USE_LEVELDB=1
-USE_UPNP=0
+USE_UPNP=1
 USE_QRCODE=1
 
 # for boost 1.37, add -mt to the boost libraries
