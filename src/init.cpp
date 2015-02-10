@@ -411,7 +411,7 @@ bool AppInit2()
 
     bitdb.SetDetach(GetBoolArg("-detachdb", false));
 
-#if !defined(WIN32) && !defined(QT_GUI)
+#if !defined(WIN32) && !defined(QT_GUI) && !defined(ANDROID)
     fDaemon = GetBoolArg("-daemon");
 #else
     fDaemon = false;
@@ -606,7 +606,7 @@ bool AppInit2()
     fDiscover = GetBoolArg("-discover", true);
     fNameLookup = GetBoolArg("-dns", true);
 #if (USE_UPNP > 0)
-    fUseUPnP = GetBoolArg("-upnp", USE_UPNP);
+    fUseUPnP = GetBoolArg("-upnp", true);
 #endif
 
     bool fBound = false;
@@ -728,7 +728,11 @@ bool AppInit2()
 
     // ********************************************************* Step 8: load wallet
 
+
+    nStart = GetTimeMillis();
     uiInterface.InitMessage(_("Loading wallet..."));
+    printf("Time to send message to GUI:  %15" PRI64d "ms\n", GetTimeMillis() - nStart);
+
     printf("Loading wallet...\n");
     nStart = GetTimeMillis();
     bool fFirstRun = true;

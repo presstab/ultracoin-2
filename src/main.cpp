@@ -2824,7 +2824,9 @@ bool LoadBlockIndex(bool fAllowNew)
     CTxDB txdb("cr");
     if (!txdb.LoadBlockIndex())
         return false;
+#ifndef USE_LEVELDB
     txdb.Close();
+#endif
 
     //
     // Init with genesis block

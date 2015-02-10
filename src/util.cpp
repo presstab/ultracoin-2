@@ -237,6 +237,7 @@ inline int OutputDebugStringF(const char* pszFormat, ...)
         ret = vprintf(pszFormat, arg_ptr);
         va_end(arg_ptr);
     }
+#ifndef ANDROID
     else if (!fPrintToDebugger)
     {
         // print to debug.log
@@ -281,7 +282,7 @@ inline int OutputDebugStringF(const char* pszFormat, ...)
             va_end(arg_ptr);
         }
     }
-
+#endif
 #ifdef WIN32
     if (fPrintToDebugger)
     {

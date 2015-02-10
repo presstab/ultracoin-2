@@ -223,8 +223,14 @@ bool CTxDB::LoadBlockIndex()
     bnBestInvalidTrust = bnBestInvalidTrust;
 
     // Verify blocks in the best chain
+#ifdef ANDROID
+    int nCheckLevel = GetArg("-checklevel", 0);
+    int nCheckDepth = GetArg( "-checkblocks", 50);
+#else
     int nCheckLevel = GetArg("-checklevel", 1);
     int nCheckDepth = GetArg( "-checkblocks", 2500);
+#endif
+
     if (nCheckDepth == 0)
         nCheckDepth = 1000000000; // suffices until the year 19000
     if (nCheckDepth > nBestHeight)

@@ -937,11 +937,11 @@ public:
     void SetNull()
     {
         fHashed = false;
-       CBlockHeader::SetNull();
-       vtx.clear();
-      vchBlockSig.clear();
-      vMerkleTree.clear();
-      nDoS = 0;
+        CBlockHeader::SetNull();
+        vtx.clear();
+        vchBlockSig.clear();
+        vMerkleTree.clear();
+        nDoS = 0;
     }
 
     bool IsNull() const
