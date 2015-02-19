@@ -1,4 +1,7 @@
 QT += core gui network
+android:QT += androidextras
+
+ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
 
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += widgets
@@ -11,7 +14,7 @@ VERSION = 0.4.2
 INCLUDEPATH += src src/json src/qt
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE SCRYPT_CHACHA SCRYPT_KECCAK512 MINIUPNP_STATICLIB
 macx:DEFINES += MAC_OSX
-android:DEFINES += __arm__ OPTIMIZED_SALSA
+android:DEFINES += OPTIMIZED_SALSA ANDROID
 windows:DEFINES += __MINGW64__ BOOST_USE_WINDOWS_H
 CONFIG += no_include_pwd
 CONFIG += thread
@@ -346,7 +349,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/txdb-leveldb.h \
     src/txdb.h \
     src/scrypt-arm.S \
-    src/qt/bootstrapdialog.h 
+    src/qt/bootstrapdialog.h
 
 SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/qt/transactiontablemodel.cpp \
@@ -426,8 +429,13 @@ SOURCES += \
     src/scrypt-x86_64.S 
 }
 
-android:SOURCES += src/scrypt-arm.S src/compat/ifaddrs.c
-android:HEADERS += src/compat/ifaddrs.h
+android:SOURCES += \
+    src/scrypt-arm.S \
+    src/compat/ifaddrs.c \
+    src/qt/notificationclient.cpp
+
+android:HEADERS += src/compat/ifaddrs.h \
+    src/qt/notificationclient.h
 
 RESOURCES += \
     src/qt/bitcoin.qrc
@@ -573,9 +581,9 @@ system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)
 
 DISTFILES += \
     android/AndroidManifest.xml \
-    android/src/org/qtproject/qt5/android/bindings/NotificationClient.java \
-    android/src/org/qtproject/qt5/android/bindings/QtActivity.java \
-    android/src/org/qtproject/qt5/android/bindings/QtApplication.java
+    android/src/org/qtproject/qt5/android/bindings/QtActivity.java  \
+    android/src/org/qtproject/qt5/android/bindings/QtApplication.java \
+    android/src/net/ultracoin/ultracoinqt/NotificationClient.java
 
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
 

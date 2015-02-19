@@ -17,9 +17,8 @@
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
-#ifdef __arm__
+#ifdef ANDROID
 #include <fcntl.h>
-#include "compat/ifaddrs.h"
 #else
 #include <sys/fcntl.h>
 #endif
@@ -27,7 +26,7 @@
 #include <netdb.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#ifdef __arm__
+#ifdef ANDROID
 #include "compat/ifaddrs.h"
 #else
 #include <ifaddrs.h>

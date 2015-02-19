@@ -564,7 +564,7 @@ bool BackupWallet(const CWallet& wallet, const string& strDest)
                 filesystem::path pathDest(strDest);
                 if (filesystem::is_directory(pathDest))
                     pathDest /= wallet.strWalletFile;
-#if BOOST_VERSION >= 105600 || defined(__arm__)
+#if BOOST_VERSION >= 105600
                 boost::system::error_code code;
 #endif
                 try {

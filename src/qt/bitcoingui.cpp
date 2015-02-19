@@ -65,6 +65,10 @@ extern int64 nLastCoinStakeSearchInterval;
 extern unsigned int nStakeTargetSpacing2;
 extern bool fWalletUnlockStakingOnly;
 
+#ifdef ANDROID
+NotificationClient *androidNotificationClient;
+#endif
+
 BitcoinGUI::BitcoinGUI(QWidget *parent):
     QMainWindow(parent),
     clientModel(0),
@@ -85,6 +89,11 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     setUnifiedTitleAndToolBarOnMac(true);
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
+
+#ifdef ANDROID
+    androidNotificationClient = new NotificationClient(parent);
+#endif
+
     // Accept D&D of URIs
     setAcceptDrops(true);
 
@@ -201,6 +210,10 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     connect(receiveCoinsPage, SIGNAL(signMessage(QString)), this, SLOT(gotoSignMessageTab(QString)));
 
     gotoOverviewPage();
+#ifdef ANDROID
+    androidNotificationClient->setNotification("Testing");
+    notificator = new Notificator(qApp->applicationName(), trayIcon, this);
+#endif
 }
 
 BitcoinGUI::~BitcoinGUI()
@@ -360,7 +373,7 @@ void BitcoinGUI::createToolBars()
     toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     toolbar->setMovable(false);
     toolbar->setOrientation(Qt::Vertical);
-#ifdef __arm__
+#ifdef ANDROID
     toolbar->setIconSize(QSize(50, 32));
 #else
     toolbar->setIconSize(QSize(50, 20));
@@ -373,7 +386,7 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(receiveCoinsAction);
     toolbar->addAction(historyAction);
     toolbar->addAction(addressBookAction);
-#ifndef __arm__
+#ifndef ANDROID
     toolbar->addAction(miningAction);
 #endif
     QWidget* spacer = new QWidget();
@@ -384,7 +397,7 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(forumAction);
     toolbar->addAction(websiteAction);
 
-#ifdef __arm__
+#ifdef ANDROID
     toolbar->setStyleSheet("#toolbar { font-weight:600;border:none;height:100%;padding-top:20px; background: rgb(98, 166, 74); text-align: left; color: white;min-width:220px;max-width:24sudo0px;} QToolBar QToolButton:hover {background:rgb(80, 192, 80);} QToolBar QToolButton:checked {background:rgba(24, 64, 33, 100);}  QToolBar QToolButton { font-weight:600;font-size:24px;font-family:'Century Gothic';padding-left:22px;padding-right:192px;padding-top:4px;padding-bottom:4px; width:100%; color: white; text-align: left; background:transparent; }");
 #else
     toolbar->setStyleSheet("#toolbar { font-weight:600;border:none;height:100%;padding-top:20px; background: rgb(98, 166, 74); text-align: left; color: white;min-width:180px;max-width:24sudo0px;} QToolBar QToolButton:hover {background:rgb(80, 192, 80);} QToolBar QToolButton:checked {background:rgba(24, 64, 33, 100);}  QToolBar QToolButton { font-weight:600;font-size:18px;font-family:'Helvetica';padding-left:16px;padding-right:181px;padding-top:4px;padding-bottom:4px; width:100%; color: white; text-align: left; background:transparent; }");
@@ -500,8 +513,6 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
 #endif
-
-    notificator = new Notificator(qApp->applicationName(), trayIcon);
 }
 
 #ifndef Q_OS_MAC

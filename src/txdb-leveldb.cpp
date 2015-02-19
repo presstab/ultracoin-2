@@ -460,7 +460,7 @@ bool CTxDB::LoadBlockIndex()
 #else
     int nCheckLevel = GetArg("-checklevel", 1);
     int nCheckDepth = GetArg( "-checkblocks", 2500);
-#endif`
+#endif
     if (nCheckDepth == 0)
         nCheckDepth = 1000000000; // suffices until the year 19000
     if (nCheckDepth > nBestHeight)

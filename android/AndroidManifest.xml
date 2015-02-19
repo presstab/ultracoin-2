@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<manifest package="net.ultracoin.ultracoinqt" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="0.7.3.3-23" android:versionCode="7730024" android:installLocation="auto">
+<manifest package="net.ultracoin.ultracoinqt" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="0.7.3.4-3-ga89991d" android:versionCode="7730027" android:installLocation="auto">
     <application android:debuggable="false" android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="ultracoin-qt" android:icon="@drawable/icon">
         <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|locale|fontScale|keyboard|keyboardHidden|navigation" android:name="org.qtproject.qt5.android.bindings.QtActivity" android:label="ultracoin-qt" android:screenOrientation="landscape" android:launchMode="singleTop">
             <intent-filter>
@@ -16,7 +16,7 @@
             <meta-data android:name="android.app.bundled_in_lib_resource_id" android:resource="@array/bundled_in_lib"/>
             <meta-data android:name="android.app.bundled_in_assets_resource_id" android:resource="@array/bundled_in_assets"/>
             <!-- Run with local libs -->
-            <meta-data android:name="android.app.use_local_qt_libs" android:value="1"/>
+            <meta-data android:name="android.app.use_lotcal_qt_libs" android:value="1"/>
             <meta-data android:name="android.app.libs_prefix" android:value="/data/local/tmp/qt/"/>
             <meta-data android:name="android.app.load_local_libs" android:value="plugins/platforms/android/libqtforandroid.so:plugins/bearer/libqandroidbearer.so"/>
             <meta-data android:name="android.app.load_local_jars" android:value="jar/QtAndroid.jar:jar/QtAndroidAccessibility.jar:jar/QtAndroid-bundled.jar:jar/QtAndroidAccessibility-bundled.jar:jar/QtAndroidBearer.jar:jar/QtAndroidBearer-bundled.jar"/>
@@ -38,11 +38,11 @@
                           application still try to draw after
                           "applicationStateChanged(Qt::ApplicationSuspended)"
                           signal is sent! -->
-            <meta-data android:name="android.app.background_running" android:value="false"/>
+            <meta-data android:name="android.app.background_runackaning" android:value="false"/>
             <!-- Background running -->
         </activity>
     </application>
-    <uses-sdk android:minSdkVersion="13" android:targetSdkVersion="14"/>
+    <uses-sdk android:minSdkVersion="18" android:targetSdkVersion="18"/>
     <supports-screens android:largeScreens="true" android:normalScreens="true" android:anyDensity="true" android:smallScreens="true"/>
 
     <!-- The following comment will be replaced upon deployment with default permissions based on the dependencies of the application.

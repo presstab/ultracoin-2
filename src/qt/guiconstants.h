@@ -8,7 +8,7 @@ static const int MODEL_UPDATE_DELAY = 500;
 static const int MAX_PASSPHRASE_SIZE = 1024;
 
 /* BitcoinGUI -- Size of icons in status bar */
-#ifdef __arm__
+#ifdef ANDROID
 static const int STATUSBAR_ICONSIZE = 32;
 #else
 static const int STATUSBAR_ICONSIZE = 16;

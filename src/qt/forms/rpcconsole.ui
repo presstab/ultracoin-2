@@ -231,6 +231,68 @@
        <string>&amp;Blockchain</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_3">
+       <item row="12" column="0" rowspan="2" colspan="2">
+        <widget class="QPushButton" name="openDebugLogfileButton">
+         <property name="toolTip">
+          <string>Open the UltraCoin debug log file from the current data directory. This can take a few seconds for large log files.</string>
+         </property>
+         <property name="text">
+          <string>&amp;Open</string>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Current number of blocks</string>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="0" colspan="2">
+        <widget class="QPushButton" name="showCLOptionsButton">
+         <property name="toolTip">
+          <string>Show the UltraCoin-Qt help message to get a list with possible UltraCoin command-line options.</string>
+         </property>
+         <property name="text">
+          <string>&amp;Show</string>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="0">
+        <spacer name="verticalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>127</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLabel" name="numberOfBlocks">
+         <property name="cursor">
+          <cursorShape>IBeamCursor</cursorShape>
+         </property>
+         <property name="text">
+          <string>N/A</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::PlainText</enum>
+         </property>
+         <property name="textInteractionFlags">
+          <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+         </property>
+        </widget>
+       </item>
        <item row="3" column="0">
         <widget class="QLabel" name="label_4">
          <property name="text">
@@ -258,22 +320,6 @@
          </property>
         </spacer>
        </item>
-       <item row="1" column="1">
-        <widget class="QLabel" name="lastBlockTime">
-         <property name="cursor">
-          <cursorShape>IBeamCursor</cursorShape>
-         </property>
-         <property name="text">
-          <string>N/A</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-         <property name="textInteractionFlags">
-          <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="0">
         <widget class="QLabel" name="label_10">
          <property name="font">
@@ -300,7 +346,7 @@
          </property>
         </widget>
        </item>
-       <item row="12" column="0">
+       <item row="14" column="0">
         <widget class="QLabel" name="labelCLOptions">
          <property name="font">
           <font>
@@ -313,41 +359,8 @@
          </property>
         </widget>
        </item>
-       <item row="13" column="0" colspan="2">
-        <widget class="QPushButton" name="showCLOptionsButton">
-         <property name="toolTip">
-          <string>Show the UltraCoin-Qt help message to get a list with possible UltraCoin command-line options.</string>
-         </property>
-         <property name="text">
-          <string>&amp;Show</string>
-         </property>
-         <property name="autoDefault">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="14" column="0">
-        <spacer name="verticalSpacer_5">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>127</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_3">
-         <property name="text">
-          <string>Current number of blocks</string>
-         </property>
-        </widget>
-       </item>
        <item row="3" column="1">
-        <widget class="QLabel" name="numberOfBlocks">
+        <widget class="QLabel" name="totalBlocks">
          <property name="cursor">
           <cursorShape>IBeamCursor</cursorShape>
          </property>
@@ -362,21 +375,8 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="0" rowspan="2" colspan="2">
-        <widget class="QPushButton" name="openDebugLogfileButton">
-         <property name="toolTip">
-          <string>Open the UltraCoin debug log file from the current data directory. This can take a few seconds for large log files.</string>
-         </property>
-         <property name="text">
-          <string>&amp;Open</string>
-         </property>
-         <property name="autoDefault">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
        <item row="4" column="1">
-        <widget class="QLabel" name="totalBlocks">
+        <widget class="QLabel" name="lastBlockTime">
          <property name="cursor">
           <cursorShape>IBeamCursor</cursorShape>
          </property>

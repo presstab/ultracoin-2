@@ -55,7 +55,7 @@ namespace boost {
 # include <sys/prctl.h>
 #endif
 
-#if !defined(WIN32) && !defined(__arm__)
+#if !defined(WIN32) && !defined(ANDROID)
 #include <execinfo.h>
 #endif
 
@@ -226,8 +226,8 @@ bool copy_file(const char *fileIn, const char *fileOut)
 
 static FILE* fileout = NULL;
 
-inline int OutputDebugStringF(const char* pszFormat, ...)
-{
+int OutputDebugStringF(const char* pszFormat, ...)
+{   
     int ret = 0;
     if (fPrintToConsole)
     {
@@ -237,7 +237,7 @@ inline int OutputDebugStringF(const char* pszFormat, ...)
         ret = vprintf(pszFormat, arg_ptr);
         va_end(arg_ptr);
     }
-#ifndef ANDROID
+//#ifndef ANDROID
     else if (!fPrintToDebugger)
     {
         // print to debug.log
@@ -282,7 +282,7 @@ inline int OutputDebugStringF(const char* pszFormat, ...)
             va_end(arg_ptr);
         }
     }
-#endif
+//#endif
 #ifdef WIN32
     if (fPrintToDebugger)
     {
@@ -1060,7 +1060,7 @@ void LogStackTrace() {
     printf("\n\n******* exception encountered *******\n");
     if (fileout)
     {
-#if !defined(WIN32) && !defined(__arm__)
+#if !defined(WIN32) && !defined(ANDROID)
         void* pszBuffer[32];
         size_t size;
         size = backtrace(pszBuffer, 32);

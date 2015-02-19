@@ -27,7 +27,7 @@ AddressBookPage::AddressBookPage(Mode mode, Tabs tab, QWidget *parent) :
 {
     ui->setupUi(this);
 
-#ifdef __arm__ // Icons on push buttons are very uncommon on Mac
+#ifdef ANDROID // Icons on push buttons are very uncommon on Mac
     ui->newAddressButton->setIcon(QIcon());
     ui->copyToClipboard->setIcon(QIcon());
     ui->signMessage->setIcon(QIcon());

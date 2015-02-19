@@ -27,7 +27,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
-#ifdef __arm__  // Icons on push buttons are very uncommon on Android
+#ifdef ANDROID  // Icons on push buttons are very uncommon on Android
     ui->addButton->setIcon(QIcon());
     ui->clearButton->setIcon(QIcon());
     ui->toggleCoinControlButton->setIcon(QIcon());

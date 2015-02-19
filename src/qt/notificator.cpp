@@ -22,6 +22,10 @@ extern bool qt_mac_execute_apple_script(const QString &script, AEDesc *ret);
 #include "macnotificationhandler.h"
 #endif
 
+#ifdef ANDROID
+#include "notificationclient.h"
+#endif
+
 // https://wiki.ubuntu.com/NotificationDevelopmentGuidelines recommends at least 128
 const int FREEDESKTOP_NOTIFICATION_ICON_SIZE = 128;
 
@@ -39,6 +43,7 @@ Notificator::Notificator(const QString &programName, QSystemTrayIcon *trayicon, 
     {
         mode = QSystemTray;
     }
+
 #ifdef USE_DBUS
     interface = new QDBusInterface("org.freedesktop.Notifications",
           "/org/freedesktop/Notifications", "org.freedesktop.Notifications");
@@ -47,6 +52,15 @@ Notificator::Notificator(const QString &programName, QSystemTrayIcon *trayicon, 
         mode = Freedesktop;
     }
 #endif
+
+#ifdef ANDROID
+    androidNotifier = new NotificationClient(parent);
+    if (androidNotifier != NULL)
+    {
+        mode = AndroidNotifier;
+    }
+#endif
+
 #if defined(Q_OS_MAC) && QT_VERSION < 0x050400
     // Check if Growl is installed (based on Qt's tray icon implementation)
     CFURLRef cfurl;
@@ -69,6 +83,9 @@ Notificator::~Notificator()
 {
 #ifdef USE_DBUS
     delete interface;
+#endif
+#ifdef ANDROID
+    delete androidNotifier;
 #endif
 }
 
@@ -226,6 +243,13 @@ void Notificator::notifySystray(Class cls, const QString &title, const QString &
 }
 
 // Based on Qt's tray icon implementation
+#ifdef ANDROID
+void Notificator::notifyAndroid(Class cls, const QString &title, const QString &text)
+{
+    printf("In notificator::notifyAndroid\n");
+    androidNotifier->setNotification(title + " - " + text);
+}
+#endif
 
 #if defined(Q_OS_MAC) && QT_VERSION < 0x050400
 void Notificator::notifyGrowl(Class cls, const QString &title, const QString &text, const QIcon &icon)
@@ -291,6 +315,11 @@ void Notificator::notify(Class cls, const QString &title, const QString &text, c
     case Growl12:
     case Growl13:
         notifyGrowl(cls, title, text, icon);
+        break;
+#endif
+#ifdef ANDROID
+    case AndroidNotifier:
+        notifyAndroid(cls, title, text);
         break;
 #endif
     default:

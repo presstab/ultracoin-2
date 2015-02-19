@@ -7,7 +7,7 @@
 #include "util.h"
 #include "sync.h"
 
-#ifdef __arm__
+#ifdef ANDROID
 #include <fcntl.h>
 #elif !defined(WIN32)
 #include <sys/fcntl.h>
