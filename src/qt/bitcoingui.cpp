@@ -498,6 +498,8 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu = dockIconHandler->dockMenu();
 #endif
 
+    notificator = new Notificator(qApp->applicationName(), trayIcon);
+
     // Configuration of the tray icon (or dock icon) icon menu
     trayIconMenu->addAction(toggleHideAction);
     trayIconMenu->addSeparator();

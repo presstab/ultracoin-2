@@ -200,6 +200,7 @@ int main(int argc, char *argv[])
     QImage img(":/images/splash");
     QPixmap amap = QPixmap::fromImage(img);
     QSplashScreen splash(amap);
+
     if (GetBoolArg("-splash", true) && !GetBoolArg("-min"))
     {
         splash.show();
