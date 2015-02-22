@@ -224,8 +224,8 @@ contains(USE_BUILD_INFO, 1) {
     DEFINES += HAVE_BUILD_INFO
 }
 
-QMAKE_CXXFLAGS += -O2 -Wno-deprecated
-QMAKE_CFLAGS += -O3 -Wno-deprecated 
+QMAKE_CXXFLAGS += -O2 -msse -Wno-deprecated
+QMAKE_CFLAGS += -O3 -msse -Wno-deprecated
 macx: QMAKE_CFLAGS += -no-integrated-as
 QMAKE_CXXFLAGS_WARN_ON = -fdiagnostics-show-option #-Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wstack-protector -Wno-deprecated
 
