@@ -27,6 +27,7 @@ macx:QMAKE_CXXFLAGS += -stdlib=libc++
 USE_LEVELDB=1
 USE_UPNP=1
 USE_QRCODE=1
+USE_BUILD_INFO=1
 
 # for boost 1.37, add -mt to the boost libraries
 # use: qmake BOOST_LIB_SUFFIX=-mt
@@ -349,7 +350,8 @@ HEADERS += src/qt/bitcoingui.h \
     src/txdb-leveldb.h \
     src/txdb.h \
     src/scrypt-arm.S \
-    src/qt/bootstrapdialog.h
+    src/qt/bootstrapdialog.h \
+    src/version.h.in
 
 SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/qt/transactiontablemodel.cpp \
