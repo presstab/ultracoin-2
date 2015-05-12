@@ -977,7 +977,16 @@ uint256 WantedByOrphan(const CBlock* pblockOrphan)
 const unsigned char minNfactor = 4;
 const unsigned char maxNfactor = 30;
 
+int64 nRetargetUpdateStartV4 = 1200000; // fix #3
+
 unsigned char GetNfactor(int64 nTimestamp) {
+
+    const CBlockIndex* pbl = GetLastBlockIndex(pindexBest, false);
+    if (pbl && pbl->nHeight >= nRetargetUpdateStartV4)
+    {
+        return 14;   // Viva la Nfactor 14!!!!!
+    }
+
     int l = 0;
     if (nTimestamp <= nChainStartTime || fTestNet)
         return 4;
@@ -997,7 +1006,6 @@ unsigned char GetNfactor(int64 nTimestamp) {
     return min(max(N, minNfactor), maxNfactor);
 }
 
-int64 nRetargetUpdateStartV4 = 1200000; // fix #3
 
 //4/21/2015 = ~29,326,754 UTC @ 30 UTC per block - 1,137,000
 //[Change to 10 UTC per block pending new update]
