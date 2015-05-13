@@ -883,6 +883,12 @@ bool AppInit2()
     if (fServer)
         NewThread(ThreadRPCServer, NULL);
 
+    // Set these at the freaking start instead of waiting for a block to come in...
+    nBestHeight = pindexBest->nHeight;
+    nBestHeightTime = pindexBest->GetBlockTime();   // WM - Record timestamp of new best block.
+    bnBestChainTrust = pindexBest->bnChainTrust;
+
+
     // ********************************************************* Step 12: finished
 
     uiInterface.InitMessage(_("Done loading"));
