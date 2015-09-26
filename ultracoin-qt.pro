@@ -35,17 +35,17 @@ USE_BUILD_INFO=1
 # use: BOOST_THREAD_LIB_SUFFIX=_win32-...
 # or when linking against a specific BerkelyDB version: BDB_LIB_SUFFIX=-4.8
 
-win32:BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
-win32:BOOST_INCLUDE_PATH="../deps/boost_1_55_0"
-win32:BOOST_LIB_PATH="../deps/boost_1_55_0/stage/lib"
-win32:BDB_INCLUDE_PATH="../deps/db-4.8.30.NC/build_unix"
-win32:BDB_LIB_PATH="../deps/db-4.8.30.NC/build_unix"
-win32:OPENSSL_INCLUDE_PATH="../deps/openssl-1.0.1j/include"
-win32:OPENSSL_LIB_PATH="../deps/openssl-1.0.1j"
-win32:MINIUPNPC_LIB_PATH="../deps/miniupnpc"
-win32:MINIUPNPC_INCLUDE_PATH="../deps"
-win32:QRCODE_LIB_PATH="../MinGW/msys/1.0/local/lib"
-win32:QRCODE_INCLUDE_PATH="../MinGW/msys/1.0/local/include"
+win32:BOOST_LIB_SUFFIX=-mgw49-mt-s-1_57
+win32:BOOST_INCLUDE_PATH="../../include"
+win32:BOOST_LIB_PATH="../../lib"
+win32:BDB_INCLUDE_PATH="../../include"
+win32:BDB_LIB_PATH="../../lib"
+win32:OPENSSL_INCLUDE_PATH="../../ssl/include"
+win32:OPENSSL_LIB_PATH="../../ssl/lib"
+win32:MINIUPNPC_LIB_PATH="../../lib"
+win32:MINIUPNPC_INCLUDE_PATH="../../include"
+win32:QRCODE_LIB_PATH="../../lib"
+win32:QRCODE_INCLUDE_PATH="../../include"
 
 #brew install automake libtool openssl pkg-config protobuf boost berkeley-db4 miniupnpc qrencode --build-from-source
 macx:BOOST_LIB_SUFFIX=-mt

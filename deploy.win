@@ -1,0 +1,4 @@
+#!/bin/sh
+/c/Qt/Qt5.3.2/5.3/mingw482_32/bin/windeployqt.exe -qmldir /c/Qt/Qt5.3.2/5.3/mingw32/bin ./release
+
+

@@ -7,25 +7,19 @@ USE_IPV6:=1
 USE_LEVELDB:=1
 
 INCLUDEPATHS= \
- -I"C:\deps\boost_1_55_0" \
- -I"C:\deps\db-4.8.30.NC\build_unix" \
- -I"C:\deps\openssl-1.0.1j\include" \
- -I"c:\deps\protobuf-2.5.0\src" \
- -I"c:\deps"
+ -I"/usr/local/include" \
+ -I"/usr/local/ssl/include"
 
 LIBPATHS= \
- -L"C:\deps\boost_1_55_0\stage\lib" \
- -L"C:\deps\db-4.8.30.NC\build_unix" \
- -L"C:\deps\openssl-1.0.1j" \
- -L"c:\deps\protobuf-2.5.0\src\.libs" \
- -L"c:\deps\miniupnpc"
+ -L"/usr/local/lib" \
+ -L"/usr/local/ssl/lib"
 
 LIBS= \
- -l boost_system-mgw49-mt-s-1_55 \
- -l boost_chrono-mgw49-mt-s-1_55 \
- -l boost_filesystem-mgw49-mt-s-1_55 \
- -l boost_program_options-mgw49-mt-s-1_55 \
- -l boost_thread-mgw49-mt-s-1_55 \
+ -l boost_system-mgw49-mt-s-1_57 \
+ -l boost_chrono-mgw49-mt-s-1_57 \
+ -l boost_filesystem-mgw49-mt-s-1_57 \
+ -l boost_program_options-mgw49-mt-s-1_57 \
+ -l boost_thread-mgw49-mt-s-1_57 \
  -l db_cxx \
  -l ssl \
  -l crypto

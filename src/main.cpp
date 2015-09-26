@@ -977,7 +977,7 @@ uint256 WantedByOrphan(const CBlock* pblockOrphan)
 const unsigned char minNfactor = 4;
 const unsigned char maxNfactor = 30;
 
-int64 nRetargetUpdateStartV4 = 1200000; // fix #3
+int64 nRetargetUpdateStartV4 = 1470000; // fix #3  oct 16 2015 @ 9am target
 
 unsigned char GetNfactor(int64 nTimestamp) {
 
@@ -3365,8 +3365,8 @@ bool static AlreadyHave(CTxDB& txdb, const CInv& inv)
 // The message start string is designed to be unlikely to occur in normal data.
 // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
 // a large 4-byte int at any alignment.
-//unsigned char pchMessageStart[4] = { 0xd9, 0xe6, 0xe7, 0xf5 };
-unsigned char pchMessageStart[4] = { 0xb0, 0x0b, 0x1e, 0x55 };
+
+unsigned char pchMessageStart[4] = { 0xd9, 0xe6, 0xe7, 0xf5 };
 
 bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 {
@@ -3747,7 +3747,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         // Send the rest of the chain
         if (pindex)
             pindex = pindex->pnext;
-        int nLimit = 500;
+
+        int nLimit = 2000; // increase block flow
+
+        if (pfrom->nVersion < 70058)
+            nLimit = 500;
+
         printf("getblocks %d to %s limit %d\n", (pindex ? pindex->nHeight : -1), hashStop.ToString().substr(0,20).c_str(), nLimit);
         for (; pindex; pindex = pindex->pnext)
         {
@@ -3811,7 +3816,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         //vector<CBlock> vHeaders;
         vector<CBlockHeader> vHeaders;
-        int nLimit = 2000;
+        int nLimit = 8000;
+
+        if (pfrom->nVersion < 70058)
+            nLimit = 2000;
+
         printf("getheaders %d to %s\n", (pindex ? pindex->nHeight : -1), hashStop.ToString().substr(0,20).c_str());
         for (; pindex; pindex = pindex->pnext)
         {
@@ -4245,7 +4254,10 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
         // Start block sync
         if (pto->fStartSync) {
             pto->fStartSync = false;
-            pto->PushGetBlocks(pindexBest, uint256(0));
+
+            // don't pull blocks from less than prot ver 70058 clients after fork #3 height
+            if (pto->nVersion >= 70058 && pindexBest->nHeight < nRetargetUpdateStartV4)
+                pto->PushGetBlocks(pindexBest, uint256(0));
         }
 
 

@@ -13,14 +13,14 @@
 
 #define DISPLAY_VERSION_MAJOR         0
 #define DISPLAY_VERSION_MINOR        7
-#define DISPLAY_VERSION_REVISION        3
-#define DISPLAY_VERSION_BUILD         4
+#define DISPLAY_VERSION_REVISION        4
+#define DISPLAY_VERSION_BUILD         1
 
-#define APP_VERSION      "0.7.3.4"
-#define APP_VERSION_RC   0,7,3,4
-#define APP_REVISION     "9-gb9a233d"
+#define APP_VERSION      "0.7.4.1"
+#define APP_VERSION_RC   0,7,4,1
+#define APP_REVISION     "-1-g89d9749"
 #define APP_NAME         "ultracoin-qt"
-#define APP_TIME         1424634368
+#define APP_TIME         1443296757
 
 static const int CLIENT_VERSION =
                            1000000 * CLIENT_VERSION_MAJOR
@@ -36,7 +36,7 @@ extern const std::string CLIENT_DATE;
 // network protocol versioning
 //
 
-static const int PROTOCOL_VERSION = 70057;
+static const int PROTOCOL_VERSION = 70058;
 
 // earlier versions not supported as of Feb 2012, and are disconnected
 static const int MIN_PROTO_VERSION = 70056;
