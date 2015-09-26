@@ -12,7 +12,7 @@ using namespace std;
 extern int nStakeMaxAge;
 extern int nStakeTargetSpacing;
 extern int nStakeTargetSpacing2;  // change stake target spacing to 60
-extern int64 nRetargetUpdateStart2;
+extern int64 nRetargetUpdateStartV3;
 extern int64 nRetargetUpdateStartV4;
 
 // Modifier interval: time to elapse before new modifier is computed
@@ -165,9 +165,7 @@ bool ComputeNextStakeModifier(const CBlockIndex* pindexPrev, uint64& nStakeModif
     // Sort candidate blocks by timestamp
     vector<pair<int64, uint256> > vSortedByTimestamp;
     
-    if (pindexPrev->nHeight >= nRetargetUpdateStartV4)
-        vSortedByTimestamp.reserve(64 * nModifierInterval / nStakeTargetSpacing2);
-    else if (pindexPrev->nHeight >= nRetargetUpdateStart2)
+    if (pindexPrev->nHeight >= nRetargetUpdateStartV3)
         vSortedByTimestamp.reserve(64 * nModifierInterval / nStakeTargetSpacing2);
     else
         vSortedByTimestamp.reserve(64 * nModifierInterval / nStakeTargetSpacing);

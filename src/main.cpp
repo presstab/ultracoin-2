@@ -1100,8 +1100,8 @@ int64 GetProofOfStakeReward(int64 nCoinAge, int nHeight)
     return nSubsidy;
 }
 
-static const int64 nRetargetUpdateStart = 855838; // emergency time skew fix
-int64 nRetargetUpdateStart2 = 861677;  // fix #2
+static const int64 nRetargetUpdateStartV2 = 855838; // emergency time skew fix
+int64 nRetargetUpdateStartV3 = 861677;  // fix #2
 // int64 nRetargetUpdateStartV4 see above at line 1000
 
 static const int64 nTargetTimespan = 30 * 60;  // 6 hours (30mins now)
@@ -1513,14 +1513,14 @@ unsigned int static GetNextTargetRequired(const CBlockIndex* pindexLast, const C
         else
             return GetNextStakeRequiredV4(pindexLast, pblock);
     }
-    else if (pindexLast->nHeight >= nRetargetUpdateStart2)
+    else if (pindexLast->nHeight >= nRetargetUpdateStartV3)
     {
         if (!fProofOfStake)
             return GetNextWorkRequiredV3(pindexLast, pblock);
         else
             return GetNextStakeRequiredV3(pindexLast, pblock);
     }
-    else if (pindexLast->nHeight >= nRetargetUpdateStart)
+    else if (pindexLast->nHeight >= nRetargetUpdateStartV2)
     {
         return GetNextTargetRequiredV2(pindexLast, pblock, fProofOfStake);
     }
@@ -3474,6 +3474,22 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             }
         }
 
+        // Relay alerts
+        {
+            LOCK(cs_mapAlerts);
+            BOOST_FOREACH(PAIRTYPE(const uint256, CAlert)& item, mapAlerts)
+                item.second.RelayTo(pfrom);
+        }
+
+        // Disconnect from older wallets up to their fork height by version before pulling blocks
+        if ((pfrom->nVersion < 70056 && (pindexBest->nHeight >= nRetargetUpdateStartV2)) ||
+            (pfrom->nVersion < 70057 && (pindexBest->nHeight >= nRetargetUpdateStartV3)) ||
+            (pfrom->nVersion < 70058 && (pindexBest->nHeight >= nRetargetUpdateStartV4)))
+        {
+            pfrom->fDisconnect = true;  // disconnect to save connections for up to date wallets
+            return true;
+        }
+
         // Ask the first connected node for block updates
         static int nAskedForBlocks = 0;
         if (!pfrom->fClient && !pfrom->fOneShot &&
@@ -3484,13 +3500,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         {
             nAskedForBlocks++;
             pfrom->PushGetBlocks(pindexBest, uint256(0));
-        }
-
-        // Relay alerts
-        {
-            LOCK(cs_mapAlerts);
-            BOOST_FOREACH(PAIRTYPE(const uint256, CAlert)& item, mapAlerts)
-                item.second.RelayTo(pfrom);
         }
 
         // relay sync-checkpoint
@@ -4255,12 +4264,14 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
         if (pto->fStartSync) {
             pto->fStartSync = false;
 
-            // don't pull blocks from less than prot ver 70058 clients after fork #3 height
-            if (pto->nVersion >= 70058 && pindexBest->nHeight < nRetargetUpdateStartV4)
+            // don't pull blocks from from clients beyond previous fork heights
+            if ((pindexBest->nHeight < nRetargetUpdateStartV4 && pto->nVersion >= 70057) ||
+                (pindexBest->nHeight < nRetargetUpdateStartV3 && pto->nVersion >= 70056) ||
+                (pindexBest->nHeight < nRetargetUpdateStartV2 && pto->nVersion >= 70055))
+            {
                 pto->PushGetBlocks(pindexBest, uint256(0));
+            }
         }
-
-
         // Resend wallet transactions that haven't gotten in a block yet
         ResendWalletTransactions();
 
