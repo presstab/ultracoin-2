@@ -1091,8 +1091,10 @@ int64 GetProofOfStakeReward(int64 nCoinAge, int nHeight)
         nRewardCoinYear = 5.2 * CENT;
     else if (nHeight < 4000000)
         nRewardCoinYear = 2 * CENT;
-    else
+    else if (nHeight < 8000000)
         nRewardCoinYear = 1.5 * CENT;
+    else
+        nRewardCoinYear = 1 * CENT;
 
     int64 nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * nRewardCoinYear;
     if (fDebug && GetBoolArg("-printcreation"))
