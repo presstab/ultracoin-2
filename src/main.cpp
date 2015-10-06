@@ -977,12 +977,12 @@ uint256 WantedByOrphan(const CBlock* pblockOrphan)
 const unsigned char minNfactor = 4;
 const unsigned char maxNfactor = 30;
 
-int64 nRetargetUpdateStartV4 = 1470000; // fix #3  oct 16 2015 @ 9am target
+int64 nRetargetUpdateStartV4 = 1500000; // fix #3  Nov 01 2015 @ 12am +/- 3 days UT target
 
 unsigned char GetNfactor(int64 nTimestamp) {
 
     const CBlockIndex* pbl = GetLastBlockIndex(pindexBest, false);
-    if (pbl && pbl->nHeight >= nRetargetUpdateStartV4)
+    if (nTimestamp > 1446336000) // Nov 1, 2015 00:00:00 UT
     {
         return 14;   // Viva la Nfactor 14!!!!!
     }
