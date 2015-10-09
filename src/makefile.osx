@@ -1,4 +1,4 @@
-# -*- mode: Makefile; -*-
+-*- mode: Makefile; -*-
 # Copyright (c) 2011 Bitcoin Developers
 # Distributed under the MIT/X11 software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -65,7 +65,7 @@ else
 CFLAGS = -march=native -arch x86_64 -O2
 endif
 # scrypt-jane specific parameters
-DEFS+=-DSCRYPT_KECCAK512 -DSCRYPT_CHACHA #-DSCRYPT_CHOOSE_COMPILETIME -fPIC
+DEFS+=-DSCRYPT_KECCAK512 -DSCRYPT_CHACHA -DSCRYPT_CHOOSE_COMPILETIME #-fPIC
 
 xCXXFLAGS_SCRYPT_JANE=-msse2 -msse3 -msse4.1 -pthread -Wextra -Wformat -Wformat-security -Wno-unused-parameter -no-integrated-as \
     $(DEBUGFLAGS) $(DEFS) $(HARDENING) $(CXXFLAGS)
@@ -106,7 +106,7 @@ OBJS= \
     obj/pbkdf2.o \
     obj/kernel.o \
     obj/scrypt-jane.o \
-    obj/scrypt_mine.o
+    obj/scrypt_mine.o 
 
 ifndef USE_UPNP
 	override USE_UPNP = -
@@ -161,10 +161,10 @@ obj/%.o: %.cpp
 	      -e '/^$$/ d' -e 's/$$/ :/' < $(@:%.o=%.d) >> $(@:%.o=%.P); \
 	  rm -f $(@:%.o=%.d)
 
-obj/scrypt-x86.o: scrypt-x86.S
+obj/scrypt-x86_intel.o: scrypt-x86_intel.S
 	$(CXX) -c -no-integrated-as $(xCXXFLAGS) -MMD -o $@ $<
 
-obj/scrypt-x86_64.o: scrypt-x86_64.S
+obj/scrypt-x86_64_intel.o: scrypt-x86_64_intel.S
 	$(CXX) -c -no-integrated-as $(xCXXFLAGS) -MMD -o $@ $<
 
 obj/scrypt-jane.o: scrypt-jane/scrypt-jane.c
