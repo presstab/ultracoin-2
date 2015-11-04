@@ -431,6 +431,14 @@ SOURCES += \
     src/scrypt-x86_64.S 
 }
 
+macx: {
+SOURCES += \
+    src/scrypt-x86_nomacro.S \
+    src/scrypt-x86_64_nomacro.S
+}
+
+
+
 android:SOURCES += \
     src/scrypt-arm.S \
     src/compat/ifaddrs.c \
