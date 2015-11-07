@@ -978,6 +978,7 @@ const unsigned char minNfactor = 4;
 const unsigned char maxNfactor = 30;
 
 int64 nRetargetUpdateStartV4 = 1500000; // fix #3  Nov 01 2015 @ 12am +/- 3 days UT target
+int64 nRetargetUpdateStartV5 = 1509838; // fix #4
 
 unsigned char GetNfactor(int64 nTimestamp) {
 
@@ -1136,8 +1137,8 @@ static const int64 nAveragingStakeTimespan4 = nAveragingInterval4 * nStakeTarget
 
 static const int64 nMaxAdjustDownV4 = 16; // 16% adjustment down
 static const int64 nMaxAdjustUpV4 = 12; // 12% adjustment up
-static const int64 nMinActualTimespanV4 = nAveragingTargetTimespan * (100 - nMaxAdjustUpV4) / 100;
-static const int64 nMaxActualTimespanV4 = nAveragingTargetTimespan * (100 + nMaxAdjustDownV4) / 100;
+static const int64 nMinActualTimespanV4 = nAveragingTargetTimespan4 * (100 - nMaxAdjustUpV4) / 100;
+static const int64 nMaxActualTimespanV4 = nAveragingTargetTimespan4 * (100 + nMaxAdjustDownV4) / 100;
 static const int64 nMinActualStakeTimespanV4 = nAveragingStakeTimespan * (100 - nMaxAdjustUpV4) / 100;
 static const int64 nMaxActualStakeTimespanV4 = nAveragingStakeTimespan * (100 + nMaxAdjustDownV4) / 100;
 
@@ -1168,6 +1169,72 @@ const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfSta
     while (pindex && pindex->pprev && (pindex->IsProofOfStake() != fProofOfStake))
         pindex = pindex->pprev;
     return pindex;
+}
+
+unsigned int static GetNextWorkRequiredV5(const CBlockIndex* pindexLast, const CBlockHeader* pblock)
+{
+    CBigNum bnTargetLimit = bnProofOfWorkLimit;
+    CBigNum bnNew;
+
+    // Genesis block
+    if (pindexLast == NULL)
+        return bnTargetLimit.GetCompact();
+
+    if (fTestNet)
+    {
+        // Special difficulty rule for testnet:
+        // If the new block's timestamp is more than 2* 10 minutes
+        // then allow mining of a min-difficulty block.
+        if (pblock->nTime > pindexLast->nTime + nTargetSpacing*2)
+            return bnProofOfWorkLimit.GetCompact();
+        else
+        {
+            // Return the last non-special-min-difficulty-rules-block
+            const CBlockIndex* pindex = pindexLast;
+            while (pindex->pprev && pindex->nHeight % nInterval != 0 && pindex->nBits == bnProofOfWorkLimit.GetCompact())
+                pindex = pindex->pprev;
+            return pindex->nBits;
+        }
+    }
+
+    // find first block in averaging interval
+    // Go back by what we want to be nAveragingInterval blocks per algo
+    // Skip over the proof of stake blocks
+    const CBlockIndex* pindexFirst = GetLastBlockIndex(pindexLast, false);
+    const CBlockIndex* pindexLastWork = pindexFirst;
+    for (int i = 0; pindexFirst && i < nAveragingInterval4; i++)
+    {
+        pindexFirst = GetLastBlockIndex(pindexFirst->pprev, false);
+    }
+
+    if (pindexLastWork == NULL || pindexFirst == NULL)
+        return bnProofOfWorkLimit.GetCompact(); // not enough blocks available
+
+    // Limit adjustment step
+    // Use medians to prevent time-warp attacks
+    int64_t nActualTimespan = pindexLastWork->GetMedianTimePast() - pindexFirst->GetMedianTimePast();
+
+    printf("  nActualTimespan = %" PRId64 " before bounds\n", nActualTimespan);
+    if (nActualTimespan < nMinActualTimespanV4)
+        nActualTimespan = nMinActualTimespanV4;
+    if (nActualTimespan > nMaxActualTimespanV4)
+        nActualTimespan = nMaxActualTimespanV4;
+
+    // Global retarget
+    bnNew.SetCompact(pindexLastWork->nBits);
+    bnNew *= nActualTimespan;
+    bnNew /= nAveragingTargetTimespan4;
+
+    if (bnNew > bnTargetLimit)
+        bnNew = bnTargetLimit;
+
+    /// debug print
+    printf("GetNextWorkRequiredV4 RETARGET\n");
+    printf("nTargetTimespan = %" PRId64 "    nActualTimespan = %" PRId64 "\n", nAveragingTargetTimespan4, nActualTimespan);
+    printf("Before: %08x  %s\n", pindexLastWork->nBits, CBigNum().SetCompact(pindexLastWork->nBits).getuint256().ToString().c_str());
+    printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
+
+    return bnNew.GetCompact();
 }
 
 unsigned int static GetNextStakeRequiredV4(const CBlockIndex* pindexLast, const CBlockHeader* pblock)
@@ -1216,6 +1283,11 @@ unsigned int static GetNextStakeRequiredV4(const CBlockIndex* pindexLast, const 
     printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
 
     return bnNew.GetCompact();
+}
+
+unsigned int static GetNextStakeRequiredV5(const CBlockIndex* pindexLast, const CBlockHeader* pblock)
+{
+    return GetNextStakeRequiredV4(pindexLast, pblock);
 }
 
 unsigned int static GetNextWorkRequiredV4(const CBlockIndex* pindexLast, const CBlockHeader* pblock)
@@ -1276,7 +1348,7 @@ unsigned int static GetNextWorkRequiredV4(const CBlockIndex* pindexLast, const C
         bnNew = bnTargetLimit;
 
     /// debug print
-    printf("GetNextWorkRequiredV3 RETARGET\n");
+    printf("GetNextWorkRequiredV4 RETARGET\n");
     printf("nTargetTimespan = %" PRId64 "    nActualTimespan = %" PRId64 "\n", nAveragingTargetTimespan, nActualTimespan);
     printf("Before: %08x  %s\n", pindexLastWork->nBits, CBigNum().SetCompact(pindexLastWork->nBits).getuint256().ToString().c_str());
     printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
@@ -1508,7 +1580,14 @@ unsigned int static GetNextTargetRequiredV1(const CBlockIndex* pindexLast, const
 
 unsigned int static GetNextTargetRequired(const CBlockIndex* pindexLast, const CBlockHeader* pblock, bool fProofOfStake)
 {
-    if (pindexLast->nHeight >= nRetargetUpdateStartV4)
+    if (pindexLast->nHeight >= nRetargetUpdateStartV5)
+    {
+        if (!fProofOfStake)
+	    return GetNextWorkRequiredV5(pindexLast, pblock);
+        else
+            return GetNextStakeRequiredV5(pindexLast, pblock);
+    }
+    else if (pindexLast->nHeight >= nRetargetUpdateStartV4)
     {
         if (!fProofOfStake)
             return GetNextWorkRequiredV4(pindexLast, pblock);
@@ -3368,7 +3447,7 @@ bool static AlreadyHave(CTxDB& txdb, const CInv& inv)
 // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
 // a large 4-byte int at any alignment.
 
-unsigned char pchMessageStart[4] = { 0xd9, 0xe6, 0xe7, 0xf5 };
+unsigned char pchMessageStart[4] = { 0x69, 0x69, 0x69, 0x69 };
 
 bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 {

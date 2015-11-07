@@ -4,7 +4,15 @@
 	SCRYPT_CHOOSE_COMPILETIME (gcc only!)
 	SCRYPT_CHOOSE_RUNTIME
 */
+
+#ifndef SCRYPT_CHOOSE_COMPILETIME
+
+#warning SCRYPT_CHOOSE_RUNTIME selected
 #define SCRYPT_CHOOSE_RUNTIME
+
+#else
+#warning SCRYPT_CHOOSE_COMPILETIME selected
+#endif
 
 
 /*
