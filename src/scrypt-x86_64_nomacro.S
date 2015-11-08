@@ -31,7 +31,7 @@
 
 
 	.text
-	.align 32
+    .align 8
 gen_salsa8_core:
 	# 0: %rdx, %rdi, %rcx, %rsi
 	movq	8(%rsp), %rdi
@@ -606,7 +606,7 @@ gen_salsa8_core:
 
 
 	.text
-	.align 32
+    .align 8
 	.globl scrypt_core
 	.globl _scrypt_core
 scrypt_core:
@@ -799,7 +799,7 @@ gen_scrypt_core_loop2:
 
 
 
-	.align 32
+    .align 8
 xmm_scrypt_core:
 	# shuffle 1st block into %xmm8-%xmm11
 	movl	60(%rdi), %edx
@@ -2231,7 +2231,7 @@ xmm_scrypt_core_loop2:
 
 
 	.text
-	.align 32
+    .align 8
 	.globl scrypt_best_throughput
 	.globl _scrypt_best_throughput
 scrypt_best_throughput:
@@ -2261,7 +2261,7 @@ scrypt_best_throughput_exit:
 
 
 	.text
-	.align 32
+    .align 8
 	.globl scrypt_core_2way
 	.globl _scrypt_core_2way
 scrypt_core_2way:
@@ -4869,7 +4869,7 @@ scrypt_core_2way_loop2:
 
 
 	.text
-	.align 32
+    .align 8
 	.globl scrypt_core_3way
 	.globl _scrypt_core_3way
 scrypt_core_3way:

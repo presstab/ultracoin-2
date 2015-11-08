@@ -1513,7 +1513,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
             }
 
             if (fDebug)
-                printf("Stake miner: %d meta items loaded for %d coins\n", mapMeta.size(), setCoins.size());
+                printf("Stake miner: %lu meta items loaded for %lu coins\n", mapMeta.size(), setCoins.size());
 
             fCoinsDataActual = true;
         }

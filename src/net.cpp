@@ -1030,12 +1030,17 @@ void ThreadMapPort2(void* parg)
     char lanaddr[64];
 
 #ifndef UPNPDISCOVER_SUCCESS
+
     /* miniupnpc 1.5 */
     devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0);
 #else
     /* miniupnpc 1.6 */
     int error = 0;
-    devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0, 0, &error);
+#ifndef MAC_OSX
+    devlist = upnpDiscover(2000, multicastif, minissdpdpathm 0, 0, &error);
+#else
+    devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0, 0, 60, &error);
+#endif
 #endif
 
     struct UPNPUrls urls;

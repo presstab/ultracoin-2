@@ -1282,7 +1282,7 @@ unsigned int static GetNextStakeRequiredV4(const CBlockIndex* pindexLast, const 
 
     /// debug print
     printf("GetNextStakeRequiredV4 RETARGET\n");
-    printf("nStakeTimespan = %" PRI64d "    nActualTimespan = %" PRI64d "\n", nAveragingStakeTimespan4, nActualTimespan);
+    printf("nStakeTimespan = %" PRI64d "nActualTimespan = %" PRId64 "\n", nAveragingStakeTimespan4, nActualTimespan);
     printf("Before: %08x  %s\n", pindexLastStake->nBits, CBigNum().SetCompact(pindexLastStake->nBits).getuint256().ToString().c_str());
     printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
 
@@ -1353,7 +1353,7 @@ unsigned int static GetNextWorkRequiredV4(const CBlockIndex* pindexLast, const C
 
     /// debug print
     printf("GetNextWorkRequiredV4 RETARGET\n");
-    printf("nTargetTimespan = %" PRI64d "    nActualTimespan = %" PRI64d "\n", nAveragingTargetTimespan, nActualTimespan);
+    printf("nTargetTimespan = %" PRI64d "    nActualTimespan = %" PRId64 "\n", nAveragingTargetTimespan, nActualTimespan);
     printf("Before: %08x  %s\n", pindexLastWork->nBits, CBigNum().SetCompact(pindexLastWork->nBits).getuint256().ToString().c_str());
     printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
 
@@ -1386,7 +1386,7 @@ unsigned int static GetNextStakeRequiredV3(const CBlockIndex* pindexLast, const 
     // Limit adjustment step
     // Use medians to prevent time-warp attacks
     int64_t nActualTimespan = pindexLastStake->GetMedianTimePast() - pindexFirst->GetMedianTimePast();
-    printf("  nActualTimespan = %" PRId64 " before bounds\n", nActualTimespan);
+    printf("  nActualTimespan = %" PRI64d " before bounds\n", nActualTimespan);
     if (nActualTimespan < nMinActualStakeTimespanV3)
         nActualTimespan = nMinActualStakeTimespanV3;
     if (nActualTimespan > nMaxActualStakeTimespanV3)
@@ -1402,7 +1402,7 @@ unsigned int static GetNextStakeRequiredV3(const CBlockIndex* pindexLast, const 
 
     /// debug print
     printf("GetNextStakeRequiredV3 RETARGET\n");
-    printf("nStakeTimespan = %" PRId64 "    nActualTimespan = %" PRId64 "\n", nAveragingStakeTimespan, nActualTimespan);
+    printf("nStakeTimespan = %" PRI64d "    nActualTimespan = %" PRId64 "\n", nAveragingStakeTimespan, nActualTimespan);
     printf("Before: %08x  %s\n", pindexLastStake->nBits, CBigNum().SetCompact(pindexLastStake->nBits).getuint256().ToString().c_str());
     printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
 
@@ -1452,7 +1452,7 @@ unsigned int static GetNextWorkRequiredV3(const CBlockIndex* pindexLast, const C
     // Use medians to prevent time-warp attacks
     int64_t nActualTimespan = pindexLastWork->GetMedianTimePast() - pindexFirst->GetMedianTimePast();
 
-    printf("  nActualTimespan = %" PRId64 " before bounds\n", nActualTimespan);
+    printf("  nActualTimespan = %" PRI64d " before bounds\n", nActualTimespan);
     if (nActualTimespan < nMinActualTimespanV3)
         nActualTimespan = nMinActualTimespanV3;
     if (nActualTimespan > nMaxActualTimespanV3)
@@ -1468,7 +1468,7 @@ unsigned int static GetNextWorkRequiredV3(const CBlockIndex* pindexLast, const C
 
     /// debug print
     printf("GetNextWorkRequiredV3 RETARGET\n");
-    printf("nTargetTimespan = %" PRId64 "    nActualTimespan = %" PRId64 "\n", nAveragingTargetTimespan, nActualTimespan);
+    printf("nTargetTimespan = %" PRI64d "    nActualTimespan = %" PRId64 "\n", nAveragingTargetTimespan, nActualTimespan);
     printf("Before: %08x  %s\n", pindexLastWork->nBits, CBigNum().SetCompact(pindexLastWork->nBits).getuint256().ToString().c_str());
     printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
 
@@ -3451,7 +3451,8 @@ bool static AlreadyHave(CTxDB& txdb, const CInv& inv)
 // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
 // a large 4-byte int at any alignment.
 
-unsigned char pchMessageStart[4] = { 0xd9, 0xe6, 0xe7, 0xf5 };
+//unsigned char pchMessageStart[4] = { 0xd9, 0xe6, 0xe7, 0xf5 };
+unsigned char pchMessageStart[4] = { 0x69, 0x69, 0x69, 0x69 };
 
 bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 {
