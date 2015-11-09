@@ -978,6 +978,7 @@ const unsigned char minNfactor = 4;
 const unsigned char maxNfactor = 30;
 
 int64 nRetargetUpdateStartV4 = 1500000; // fix #3  Nov 01 2015 @ 12am +/- 3 days UT target
+int64 nRetargetUpdateStartV5 = 1600000; // fix #4
 
 unsigned char GetNfactor(int64 nTimestamp) {
 
@@ -1134,12 +1135,28 @@ static const int64 nAveragingTargetTimespan4 = nAveragingInterval4 * nTargetSpac
 //static const int64 nStakeTimespan3 = 30;  // 30 seconds
 static const int64 nAveragingStakeTimespan4 = nAveragingInterval4 * nStakeTargetSpacing2;  // (240 minutes)
 
+
 static const int64 nMaxAdjustDownV4 = 16; // 16% adjustment down
 static const int64 nMaxAdjustUpV4 = 12; // 12% adjustment up
 static const int64 nMinActualTimespanV4 = nAveragingTargetTimespan * (100 - nMaxAdjustUpV4) / 100;
 static const int64 nMaxActualTimespanV4 = nAveragingTargetTimespan * (100 + nMaxAdjustDownV4) / 100;
 static const int64 nMinActualStakeTimespanV4 = nAveragingStakeTimespan * (100 - nMaxAdjustUpV4) / 100;
 static const int64 nMaxActualStakeTimespanV4 = nAveragingStakeTimespan * (100 + nMaxAdjustDownV4) / 100;
+
+
+static const int64 nTargetTimespan5 = 60;  //  (60 seconds)
+static const int64 nTargetSpacing5 = 60 ; // (60 seconds)
+static const int64 nInterval5 = 1;         // check every block
+static const int64 nAveragingInterval5 = 240; // 240 blocks, 4 hours
+static const int64 nAveragingTargetTimespan5 = nAveragingInterval5 * nTargetSpacing5;  // (240 minutes)
+static const int64 nAveragingStakeTimespan5 = nAveragingInterval5 * nStakeTargetSpacing2;  // (240 minutes)
+
+static const int64 nMaxAdjustDownV5 = 16; // 16% adjustment down
+static const int64 nMaxAdjustUpV5 = 12; // 12% adjustment up
+static const int64 nMinActualTimespanV5 = nAveragingTargetTimespan5 * (100 - nMaxAdjustUpV5) / 100;
+static const int64 nMaxActualTimespanV5 = nAveragingTargetTimespan5 * (100 + nMaxAdjustDownV5) / 100;
+static const int64 nMinActualStakeTimespanV5 = nAveragingStakeTimespan5 * (100 - nMaxAdjustUpV5) / 100;
+static const int64 nMaxActualStakeTimespanV5 = nAveragingStakeTimespan5 * (100 + nMaxAdjustDownV5) / 100;
 
 // minimum amount of work that could possibly be required nTime after
 // minimum work required was nBase
@@ -1170,6 +1187,128 @@ const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfSta
     return pindex;
 }
 
+unsigned int static GetNextWorkRequiredV5(const CBlockIndex* pindexLast, const CBlockHeader* pblock)
+{
+    CBigNum bnTargetLimit = bnProofOfWorkLimit;
+    CBigNum bnNew;
+
+    // Genesis block
+    if (pindexLast == NULL)
+        return bnTargetLimit.GetCompact();
+
+    if (fTestNet)
+    {
+        // Special difficulty rule for testnet:
+        // If the new block's timestamp is more than 2* 10 minutes
+        // then allow mining of a min-difficulty block.
+        if (pblock->nTime > pindexLast->nTime + nTargetSpacing*2)
+            return bnProofOfWorkLimit.GetCompact();
+        else
+        {
+            // Return the last non-special-min-difficulty-rules-block
+            const CBlockIndex* pindex = pindexLast;
+            while (pindex->pprev && pindex->nHeight % nInterval != 0 && pindex->nBits == bnProofOfWorkLimit.GetCompact())
+                pindex = pindex->pprev;
+            return pindex->nBits;
+        }
+    }
+
+    // find first block in averaging interval
+    // Go back by what we want to be nAveragingInterval blocks per algo
+    // Skip over the proof of stake blocks
+    const CBlockIndex* pindexFirst = GetLastBlockIndex(pindexLast, false);
+    const CBlockIndex* pindexLastWork = pindexFirst;
+    int i = 0;
+    for (; ((pindexLast->nHeight - nRetargetUpdateStartV5 - i) > 0) && pindexFirst && i < nAveragingInterval5; i++)
+    {
+        pindexFirst = GetLastBlockIndex(pindexFirst->pprev, false);
+    }
+
+    if (i == 0 || pindexLastWork == NULL || pindexFirst == NULL)
+        return bnProofOfWorkLimit.GetCompact(); // not enough blocks available
+
+    // Limit adjustment step
+    // Use medians to prevent time-warp attacks
+    int64_t nActualTimespan = pindexLastWork->GetMedianTimePast() - pindexFirst->GetMedianTimePast();
+
+    printf("  nActualTimespan = %" PRI64d " before bounds\n", nActualTimespan);
+    if (nActualTimespan < nMinActualTimespanV5)
+        nActualTimespan = nMinActualTimespanV5;
+    if (nActualTimespan > nMaxActualTimespanV5)
+        nActualTimespan = nMaxActualTimespanV5;
+
+    // transition starting.  Let's not count previous 240 blocks before V5 start
+    int64 nTargetTimespan = i * nTargetSpacing5;
+ 
+    // Global retarget
+    bnNew.SetCompact(pindexLastWork->nBits);
+    bnNew *= nActualTimespan;
+    bnNew /= nTargetTimespan;
+
+    if (bnNew > bnTargetLimit)
+        bnNew = bnTargetLimit;
+
+    /// debug print
+    printf("GetNextWorkRequiredV5 RETARGET\n");
+    printf("nTargetTimespan = %" PRI64d "    nActualTimespan = %" PRI64d "\n", nTargetTimespan, nActualTimespan);
+    printf("Before: %08x  %s\n", pindexLastWork->nBits, CBigNum().SetCompact(pindexLastWork->nBits).getuint256().ToString().c_str());
+    printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
+
+    return bnNew.GetCompact();
+}
+
+unsigned int static GetNextStakeRequiredV5(const CBlockIndex* pindexLast, const CBlockHeader* pblock)
+{
+    CBigNum bnTargetLimit = bnProofOfStakeHardLimit;
+    CBigNum bnNew;
+
+    if (pindexLast == NULL)
+        return bnTargetLimit.GetCompact(); // genesis block
+
+    // find first block in averaging interval
+    // Go back by what we want to be nAveragingInterval blocks per algo.
+    // Skip over proof of work blocks
+    const CBlockIndex* pindexFirst = GetLastBlockIndex(pindexLast, true);
+    const CBlockIndex* pindexLastStake = pindexFirst;
+
+    int i = 0;
+    for (; ((pindexLast->nHeight - nRetargetUpdateStartV5 - i) > 0) && pindexFirst && i < nAveragingInterval5; i++)
+    {
+        pindexFirst = GetLastBlockIndex(pindexFirst->pprev, true);
+    }
+
+    if (i == 0 || pindexLast == NULL || pindexFirst == NULL)
+        return bnTargetLimit.GetCompact(); // not enough blocks available
+
+    // Limit adjustment step
+    // Use medians to prevent time-warp attacks
+    int64_t nActualTimespan = pindexLastStake->GetMedianTimePast() - pindexFirst->GetMedianTimePast();
+    printf("  nActualTimespan = %" PRI64d " before bounds\n", nActualTimespan);
+    if (nActualTimespan < nMinActualStakeTimespanV5)
+        nActualTimespan = nMinActualStakeTimespanV5;
+    if (nActualTimespan > nMaxActualStakeTimespanV5)
+        nActualTimespan = nMaxActualStakeTimespanV5;
+
+    // transition starting.  Let's not count previous 240 blocks before V5 start
+    int64 nTargetTimespan = i * nTargetSpacing5;
+
+    // Global retarget
+    bnNew.SetCompact(pindexLastStake->nBits);
+    bnNew *= nActualTimespan;
+    bnNew /= nTargetTimespan;
+
+    if (bnNew > bnTargetLimit)
+        bnNew = bnTargetLimit;
+
+    /// debug print
+    printf("GetNextStakeRequiredV5 RETARGET\n");
+    printf("nStakeTimespan = %" PRI64d "    nActualTimespan = %" PRI64d "\n", nTargetTimespan, nActualTimespan);
+    printf("Before: %08x  %s\n", pindexLastStake->nBits, CBigNum().SetCompact(pindexLastStake->nBits).getuint256().ToString().c_str());
+    printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
+
+    return bnNew.GetCompact();
+}
+
 unsigned int static GetNextStakeRequiredV4(const CBlockIndex* pindexLast, const CBlockHeader* pblock)
 {
     CBigNum bnTargetLimit = bnProofOfStakeHardLimit;
@@ -1195,7 +1334,7 @@ unsigned int static GetNextStakeRequiredV4(const CBlockIndex* pindexLast, const 
     // Limit adjustment step
     // Use medians to prevent time-warp attacks
     int64_t nActualTimespan = pindexLastStake->GetMedianTimePast() - pindexFirst->GetMedianTimePast();
-    printf("  nActualTimespan = %d before bounds\n", nActualTimespan);
+    printf("  nActualTimespan = %" PRI64d " before bounds\n", nActualTimespan);
     if (nActualTimespan < nMinActualStakeTimespanV4)
         nActualTimespan = nMinActualStakeTimespanV4;
     if (nActualTimespan > nMaxActualStakeTimespanV4)
@@ -1210,13 +1349,14 @@ unsigned int static GetNextStakeRequiredV4(const CBlockIndex* pindexLast, const 
         bnNew = bnTargetLimit;
 
     /// debug print
-    printf("GetNextStakeRequiredV3 RETARGET\n");
-    printf("nStakeTimespan = %d    nActualTimespan = %d\n", nAveragingStakeTimespan4, nActualTimespan);
+    printf("GetNextStakeRequiredV4 RETARGET\n");
+    printf("nStakeTimespan = %" PRI64d "    nActualTimespan = %" PRI64d "\n", nAveragingStakeTimespan4, nActualTimespan);
     printf("Before: %08x  %s\n", pindexLastStake->nBits, CBigNum().SetCompact(pindexLastStake->nBits).getuint256().ToString().c_str());
     printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
 
     return bnNew.GetCompact();
 }
+
 
 unsigned int static GetNextWorkRequiredV4(const CBlockIndex* pindexLast, const CBlockHeader* pblock)
 {
@@ -1261,7 +1401,7 @@ unsigned int static GetNextWorkRequiredV4(const CBlockIndex* pindexLast, const C
     // Use medians to prevent time-warp attacks
     int64_t nActualTimespan = pindexLastWork->GetMedianTimePast() - pindexFirst->GetMedianTimePast();
 
-    printf("  nActualTimespan = %d before bounds\n", nActualTimespan);
+    printf("  nActualTimespan = %" PRI64d " before bounds\n", nActualTimespan);
     if (nActualTimespan < nMinActualTimespanV4)
         nActualTimespan = nMinActualTimespanV4;
     if (nActualTimespan > nMaxActualTimespanV4)
@@ -1276,8 +1416,8 @@ unsigned int static GetNextWorkRequiredV4(const CBlockIndex* pindexLast, const C
         bnNew = bnTargetLimit;
 
     /// debug print
-    printf("GetNextWorkRequiredV3 RETARGET\n");
-    printf("nTargetTimespan = %d    nActualTimespan = %d\n", nAveragingTargetTimespan, nActualTimespan);
+    printf("GetNextWorkRequiredV4 RETARGET\n");
+    printf("nTargetTimespan = %" PRI64d "    nActualTimespan = %" PRI64d "\n", nAveragingTargetTimespan, nActualTimespan);
     printf("Before: %08x  %s\n", pindexLastWork->nBits, CBigNum().SetCompact(pindexLastWork->nBits).getuint256().ToString().c_str());
     printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
 
@@ -1310,7 +1450,7 @@ unsigned int static GetNextStakeRequiredV3(const CBlockIndex* pindexLast, const 
     // Limit adjustment step
     // Use medians to prevent time-warp attacks
     int64_t nActualTimespan = pindexLastStake->GetMedianTimePast() - pindexFirst->GetMedianTimePast();
-    printf("  nActualTimespan = %d before bounds\n", nActualTimespan);
+    printf("  nActualTimespan = %" PRI64d " before bounds\n", nActualTimespan);
     if (nActualTimespan < nMinActualStakeTimespanV3)
         nActualTimespan = nMinActualStakeTimespanV3;
     if (nActualTimespan > nMaxActualStakeTimespanV3)
@@ -1326,7 +1466,7 @@ unsigned int static GetNextStakeRequiredV3(const CBlockIndex* pindexLast, const 
 
     /// debug print
     printf("GetNextStakeRequiredV3 RETARGET\n");
-    printf("nStakeTimespan = %d    nActualTimespan = %d\n", nAveragingStakeTimespan, nActualTimespan);
+    printf("nStakeTimespan = %" PRI64d "    nActualTimespan = %" PRI64d "\n", nAveragingStakeTimespan, nActualTimespan);
     printf("Before: %08x  %s\n", pindexLastStake->nBits, CBigNum().SetCompact(pindexLastStake->nBits).getuint256().ToString().c_str());
     printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
 
@@ -1376,7 +1516,7 @@ unsigned int static GetNextWorkRequiredV3(const CBlockIndex* pindexLast, const C
     // Use medians to prevent time-warp attacks
     int64_t nActualTimespan = pindexLastWork->GetMedianTimePast() - pindexFirst->GetMedianTimePast();
 
-    printf("  nActualTimespan = %d before bounds\n", nActualTimespan);
+    printf("  nActualTimespan = %" PRI64d " before bounds\n", nActualTimespan);
     if (nActualTimespan < nMinActualTimespanV3)
         nActualTimespan = nMinActualTimespanV3;
     if (nActualTimespan > nMaxActualTimespanV3)
@@ -1392,7 +1532,7 @@ unsigned int static GetNextWorkRequiredV3(const CBlockIndex* pindexLast, const C
 
     /// debug print
     printf("GetNextWorkRequiredV3 RETARGET\n");
-    printf("nTargetTimespan = %d    nActualTimespan = %d\n", nAveragingTargetTimespan, nActualTimespan);
+    printf("nTargetTimespan = %" PRI64d "    nActualTimespan = %" PRI64d "\n", nAveragingTargetTimespan, nActualTimespan);
     printf("Before: %08x  %s\n", pindexLastWork->nBits, CBigNum().SetCompact(pindexLastWork->nBits).getuint256().ToString().c_str());
     printf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
 
@@ -1508,7 +1648,14 @@ unsigned int static GetNextTargetRequiredV1(const CBlockIndex* pindexLast, const
 
 unsigned int static GetNextTargetRequired(const CBlockIndex* pindexLast, const CBlockHeader* pblock, bool fProofOfStake)
 {
-    if (pindexLast->nHeight >= nRetargetUpdateStartV4)
+    if (pindexLast->nHeight >= nRetargetUpdateStartV5)
+    {
+        if (!fProofOfStake)
+	    return GetNextWorkRequiredV5(pindexLast, pblock);
+        else
+            return GetNextStakeRequiredV5(pindexLast, pblock);
+    }
+    else if (pindexLast->nHeight >= nRetargetUpdateStartV4)
     {
         if (!fProofOfStake)
             return GetNextWorkRequiredV4(pindexLast, pblock);
