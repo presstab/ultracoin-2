@@ -979,6 +979,7 @@ const unsigned char maxNfactor = 30;
 
 int64 nRetargetUpdateStartV4 = 1500000; // fix #3  Nov 01 2015 @ 12am +/- 3 days UT target
 int64 nRetargetUpdateStartV5 = 1600000; // fix #4
+int64 nRetargetUpdateStartV6 = 1600994; // fix #5
 
 unsigned char GetNfactor(int64 nTimestamp) {
 
@@ -1648,10 +1649,14 @@ unsigned int static GetNextTargetRequiredV1(const CBlockIndex* pindexLast, const
 
 unsigned int static GetNextTargetRequired(const CBlockIndex* pindexLast, const CBlockHeader* pblock, bool fProofOfStake)
 {
-    if (pindexLast->nHeight >= nRetargetUpdateStartV5)
+    if (pindexLast->nHeight >= nRetargetUpdateStartV6)
+    {
+        return GetNextTargetRequiredV1(pindexLast, pblock, fProofOfStake);
+    }
+    else if (pindexLast->nHeight >= nRetargetUpdateStartV5)
     {
         if (!fProofOfStake)
-	    return GetNextWorkRequiredV5(pindexLast, pblock);
+            return GetNextWorkRequiredV5(pindexLast, pblock);
         else
             return GetNextStakeRequiredV5(pindexLast, pblock);
     }
@@ -3623,22 +3628,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             }
         }
 
-        // Relay alerts
-        {
-            LOCK(cs_mapAlerts);
-            BOOST_FOREACH(PAIRTYPE(const uint256, CAlert)& item, mapAlerts)
-                item.second.RelayTo(pfrom);
-        }
-
-        // Disconnect from older wallets up to their fork height by version before pulling blocks
-        if ((pfrom->nVersion < 70056 && (pindexBest->nHeight >= nRetargetUpdateStartV2)) ||
-            (pfrom->nVersion < 70057 && (pindexBest->nHeight >= nRetargetUpdateStartV3)) ||
-            (pfrom->nVersion < 70058 && (pindexBest->nHeight >= nRetargetUpdateStartV4)))
-        {
-            pfrom->fDisconnect = true;  // disconnect to save connections for up to date wallets
-            return true;
-        }
-
         // Ask the first connected node for block updates
         static int nAskedForBlocks = 0;
         if (!pfrom->fClient && !pfrom->fOneShot &&
@@ -3649,6 +3638,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         {
             nAskedForBlocks++;
             pfrom->PushGetBlocks(pindexBest, uint256(0));
+        }
+
+        // Relay alerts
+        {
+            LOCK(cs_mapAlerts);
+            BOOST_FOREACH(PAIRTYPE(const uint256, CAlert)& item, mapAlerts)
+                item.second.RelayTo(pfrom);
         }
 
         // relay sync-checkpoint
