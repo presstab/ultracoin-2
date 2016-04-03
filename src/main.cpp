@@ -1646,9 +1646,37 @@ unsigned int static GetNextTargetRequiredV1(const CBlockIndex* pindexLast, const
     return bnNew.GetCompact();
 }
 
+unsigned int GetNextTargetRequiredStandard(const CBlockIndex* pindexLast, bool fProofOfStake)
+{
+    CBigNum bnTargetLimit = fProofOfStake ? bnProofOfStakeLimit : bnProofOfWorkLimit;
+    const CBlockIndex* pindexPrev = GetLastBlockIndex(pindexLast, fProofOfStake);
+    int64 nActualSpacing = pindexPrev->GetBlockTime() - pindexPrevPrev->GetBlockTime();
+
+    //not ppcoin standard, but required for PoS coins with shorter block targets
+	if (nActualSpacing < 0)
+        nActualSpacing = 1;
+
+    // ppcoin: target change every block
+    // ppcoin: retarget with exponential moving toward target spacing
+    CBigNum bnNew;
+    bnNew.SetCompact(pindexPrev->nBits);
+
+    int64 nTargetSpacing = fProofOfStake? nStakeTargetSpacing2 : min(nTargetSpacingWorkMax, (int64) nStakeTargetSpacing2 * 2);
+    int64 nInterval = nTargetTimespan / nTargetSpacing;
+    bnNew *= ((nInterval - 1) * nTargetSpacing + nActualSpacing + nActualSpacing);
+    bnNew /= ((nInterval + 1) * nTargetSpacing);
+
+    if (bnNew > bnTargetLimit)
+        bnNew = bnTargetLimit;
+
+    return bnNew.GetCompact();
+}
+
 unsigned int static GetNextTargetRequired(const CBlockIndex* pindexLast, const CBlockHeader* pblock, bool fProofOfStake)
 {
-    if (pindexLast->nHeight >= nRetargetUpdateStartV5)
+    if(pindexLast->nHeight >= nProtocol6)
+		return GetNextTargetRequiredStandard(pindexLast, fProofOfStake);
+	else if (pindexLast->nHeight >= nRetargetUpdateStartV5)
     {
         if (!fProofOfStake)
 	    return GetNextWorkRequiredV5(pindexLast, pblock);
