@@ -11,16 +11,16 @@
 // client versioning
 //
 
-#define DISPLAY_VERSION_MAJOR         0
-#define DISPLAY_VERSION_MINOR        7
-#define DISPLAY_VERSION_REVISION        4
-#define DISPLAY_VERSION_BUILD         1
+#define DISPLAY_VERSION_MAJOR         
+#define DISPLAY_VERSION_MINOR        
+#define DISPLAY_VERSION_REVISION        
+#define DISPLAY_VERSION_BUILD         
 
-#define APP_VERSION      "0.7.4.1"
-#define APP_VERSION_RC   0,7,4,1
-#define APP_REVISION     "-5-gfe3e92d"
-#define APP_NAME         "UltraCoin-Qt"
-#define APP_TIME         1443971901
+#define APP_VERSION      
+#define APP_VERSION_RC   
+#define APP_REVISION     
+#define APP_NAME         "ultracoin-qt"
+#define APP_TIME         
 
 static const int CLIENT_VERSION =
                            1000000 * CLIENT_VERSION_MAJOR
@@ -36,10 +36,11 @@ extern const std::string CLIENT_DATE;
 // network protocol versioning
 //
 
-static const int PROTOCOL_VERSION = 70058;
+static const int PROTOCOL_VERSION = 70158;
 
 // earlier versions not supported as of Feb 2012, and are disconnected
 static const int MIN_PROTO_VERSION = 70056;
+static const int MIN_PROTO_VERSION_FORK = 70156;
 
 // nTime field added to CAddress, starting with this version;
 // if possible, avoid requesting addresses nodes older than this
@@ -48,6 +49,7 @@ static const int CADDR_TIME_VERSION = 31402;
 // only request blocks from nodes outside this range of versions
 static const int NOBLKS_VERSION_START = 60000;
 static const int NOBLKS_VERSION_END = 70055;
+static const int NOBLKS_VERSION_END_FORK = 70155;
 
 // BIP 0031, pong message, is enabled for all versions AFTER this one
 static const int BIP0031_VERSION = 60000;
