@@ -70,6 +70,7 @@ public:
 class CWallet : public CCryptoKeyStore
 {
 private:
+	bool SelectStakeCoins(std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64 nTargetAmount) const;
     bool SelectCoins(int64 nTargetValue, unsigned int nSpendTime, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl=NULL) const;
     bool SelectCoinsSimple(int64 nTargetValue, unsigned int nSpendTime, int nMinConf, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const;
 
@@ -92,10 +93,14 @@ public:
 
     std::set<int64> setKeyPool;
 
-
     typedef std::map<unsigned int, CMasterKey> MasterKeyMap;
     MasterKeyMap mapMasterKeys;
     unsigned int nMasterKeyMaxID;
+	
+	// Stake Settings
+	unsigned int nHashDrift;
+	unsigned int nHashInterval;
+	int nStakeSetUpdateTime;
 
     CWallet()
     {
@@ -105,6 +110,11 @@ public:
         nMasterKeyMaxID = 0;
         pwalletdbEncryption = NULL;
         nOrderPosNext = 0;
+		
+		// Stake Settings
+		nHashDrift = 45;
+		nHashInterval = 22;
+		nStakeSetUpdateTime = 300; // 5 minutes
     }
     CWallet(std::string strWalletFileIn)
     {
@@ -115,6 +125,11 @@ public:
         nMasterKeyMaxID = 0;
         pwalletdbEncryption = NULL;
         nOrderPosNext = 0;
+		
+		// Stake Settings
+		nHashDrift = 45;
+		nHashInterval = 22;
+		nStakeSetUpdateTime = 300; // 5 minutes
     }
 
     std::map<uint256, CWalletTx> mapWallet;
@@ -129,6 +144,7 @@ public:
     // check whether we are allowed to upgrade (or already support) to the named feature
     bool CanSupportFeature(enum WalletFeature wf) { return nWalletMaxVersion >= wf; }
 
+	bool MintableCoins();
     void AvailableCoins(std::vector<COutput>& vCoins, bool fOnlyConfirmed=true, const CCoinControl *coinControl=NULL) const;
     void AvailableCoinsMinConf(std::vector<COutput>& vCoins, int nConf) const;
     bool SelectCoinsMinConf(int64 nTargetValue, unsigned int nSpendTime, int nConfMine, int nConfTheirs, std::vector<COutput> vCoins, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const;
@@ -185,7 +201,7 @@ public:
     bool CreateTransaction(const std::vector<std::pair<CScript, int64> >& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, const CCoinControl *coinControl=NULL);
     bool CreateTransaction(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, const CCoinControl *coinControl=NULL);
     bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey);
-    bool CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int64 nSearchInterval, CTransaction& txNew, CKey& key);
+    bool CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int64 nSearchInterval, CTransaction& txNew);
     std::string SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false);
     std::string SendMoneyToDestination(const CTxDestination &address, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false);
     bool GetStakeWeight(const CKeyStore& keystore, uint64& nMinWeight, uint64& nMaxWeight, uint64& nWeight, uint64& nHoursToMaturity);

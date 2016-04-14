@@ -59,6 +59,7 @@ map<uint256, CBlock*> mapOrphanBlocks;
 multimap<uint256, CBlock*> mapOrphanBlocksByPrev;
 set<pair<COutPoint, unsigned int> > setStakeSeenOrphan;
 map<uint256, uint256> mapProofOfStake;
+map<unsigned int, unsigned int> mapHashedBlocks;
 
 map<uint256, CDataStream*> mapOrphanTransactions;
 map<uint256, map<uint256, CDataStream*> > mapOrphanTransactionsByPrev;
@@ -4750,7 +4751,7 @@ CBlock* CreateNewBlock(CWallet* pwallet, bool fProofOfStake)
         int64 nSearchTime = txCoinStake.nTime; // search to current time
         if (nSearchTime > nLastCoinStakeSearchTime)
         {
-            if (pwallet->CreateCoinStake(*pwallet, pblock->nBits, nSearchTime-nLastCoinStakeSearchTime, txCoinStake, key))
+            if (pwallet->CreateCoinStake(*pwallet, pblock->nBits, nSearchTime-nLastCoinStakeSearchTime, txCoinStake))
             {
                 if (txCoinStake.nTime >= max(pindexPrev->GetMedianTimePast()+1, pindexPrev->GetBlockTime() - nMaxClockDrift))
                 {   // make sure coinstake would meet timestamp protocol
@@ -5099,6 +5100,16 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
     // Each thread has its own key and counter
     CReserveKey reservekey(pwallet);
     unsigned int nExtraNonce = 0;
+	
+	//control the amount of times the client will check for mintable coins
+	static bool fMintableCoins = false;
+	static int nMintableLastCheck = 0;
+	
+	if(GetTime() - nMintableLastCheck > 60) // 5 minute check time 
+	{
+		nMintableLastCheck = GetTime();
+		fMintableCoins = pwallet->MintableCoins();
+	}
 
     while (fGenerateBitcoins || fProofOfStake)
     {
@@ -5122,6 +5133,16 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
             Sleep(1000);
         }
         strMintWarning = "";
+		
+		//LiteStake
+		if(mapHashedBlocks.count(nBestHeight)) //search our map of hashed blocks, see if bestblock has been hashed yet
+        {
+            if(GetTime() - mapHashedBlocks[nBestHeight] < max(pwallet->nHashInterval, (unsigned int)1)) // wait half of the nHashDrift with max wait of 3 minutes
+            {
+				Sleep(2500); // 2.5 second sleep
+                continue;
+            }
+        }
 
         //
         // Create new block
