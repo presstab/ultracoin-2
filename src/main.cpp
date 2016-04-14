@@ -3657,7 +3657,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if ((pfrom->nVersion < 70056 && (pindexBest->nHeight >= nRetargetUpdateStartV2)) ||
             (pfrom->nVersion < 70057 && (pindexBest->nHeight >= nRetargetUpdateStartV3)) ||
             (pfrom->nVersion < 70058 && (pindexBest->nHeight >= nRetargetUpdateStartV4)) ||
-			(pfrom->nVersion < MIN_PROTO_VERSION_FORK && nBestHeight < nProtocol6))
+			(pfrom->nVersion < MIN_PROTO_VERSION_FORK && nBestHeight > nProtocol6))
         {
             pfrom->fDisconnect = true;  // disconnect to save connections for up to date wallets
             return true;
