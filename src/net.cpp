@@ -1150,10 +1150,7 @@ void MapPort()
 // The second name should resolve to a list of seed addresses.
 
 static const char *strDNSSeed[][2] = {
-    { "pool1.tumblingblock.com", "dnsseed.pool1.tumblingblock.com" },
-    { "pool3.tumblingblock.com", "dnsseed.pool3.tumblingblock.com" },
-    { "ultrablockparty.com", "dnssed.ultrablockparty.com" },
-    { "Ultracoin.net", "82.196.2.163" }
+    { "presstab.pw", "utcseed.presstab.pw" }
 };
 
 
@@ -1214,7 +1211,7 @@ void ThreadDNSAddressSeed2(void* parg)
 
 unsigned int pnSeed[] =
 {
-    0x070863C0,0xA3521BC6, 0x90EF78BC, 0x33F1C851, 0x36F1C851, 0xC6F5C851,
+    //0x070863C0,0xA3521BC6, 0x90EF78BC, 0x33F1C851, 0x36F1C851, 0xC6F5C851,
 };
 
 void DumpAddresses()
