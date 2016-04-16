@@ -233,7 +233,8 @@ std::string HelpMessage()
         "  -proxy=<ip:port>       " + _("Connect through socks proxy") + "\n" +
         "  -socks=<n>             " + _("Select the version of socks proxy to use (4-5, default: 5)") + "\n" +
         "  -tor=<ip:port>         " + _("Use proxy to reach tor hidden services (default: same as -proxy)") + "\n"
-        "  -dns                   " + _("Allow DNS lookups for -addnode, -seednode and -connect") + "\n" +
+        "  -dnsseed               " + _("Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect)") + "\n";
+        "  -forcednsseed          " + _("Always query for peer addresses via DNS lookup (default: 0)") + "\n";
         "  -port=<port>           " + _("Listen for connections on <port> (default: 44100 or testnet: 44200)") + "\n" +
         "  -maxconnections=<n>    " + _("Maintain at most <n> connections to peers (default: 125)") + "\n" +
         "  -maxoutbound=<n>       " + _("Maintain at most <n> outbound connections to peers (default: 8)") + "\n" +
