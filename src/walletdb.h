@@ -144,6 +144,18 @@ public:
     {
         return Write(std::string("minversion"), nVersion);
     }
+    //presstab LiteStake
+    bool WriteHashDrift(unsigned int nHashDrift)
+    {
+        nWalletDBUpdated++;
+        return Write(std::string("hashdrift"), nHashDrift, true);
+    }
+    //presstab LiteStake
+    bool WriteHashInterval(unsigned int nHashInterval)
+    {
+        nWalletDBUpdated++;
+        return Write(std::string("hashinterval"), nHashInterval, true);
+    }
 
     bool ReadAccount(const std::string& strAccount, CAccount& account);
     bool WriteAccount(const std::string& strAccount, const CAccount& account);

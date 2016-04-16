@@ -373,6 +373,18 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         {
             ssValue >> pwallet->nOrderPosNext;
         }
+        else if(strType == "hashdrift")//presstab LiteStake
+        {
+           unsigned int nHashDrift;
+           ssValue >> nHashDrift;
+           pwallet->nHashDrift = nHashDrift;
+        }
+        else if(strType == "hashinterval")//presstab LiteStake
+        {
+           unsigned int nHashInterval;
+           ssValue >> nHashInterval;
+           pwallet->nHashInterval = nHashInterval;
+        }
     } catch (...)
     {
         return false;
