@@ -883,7 +883,7 @@ void CWalletTx::RelayWalletTransaction(CTxDB& txdb)
 {
     BOOST_FOREACH(const CMerkleTx& tx, vtxPrev)
     {
-        if (!(tx.IsCoinBase() || tx.IsCoinStake()) && && !tx.vin.empty())
+        if (!(tx.IsCoinBase() || tx.IsCoinStake()) && !tx.vin.empty())
         {
             uint256 hash = tx.GetHash();
             if (!txdb.ContainsTx(hash))
