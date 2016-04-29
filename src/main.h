@@ -35,7 +35,7 @@ static const int64 MIN_RELAY_TX_FEE = .001 * CENT; // Minimum Transaction Relay 
 static const int64 MAX_MONEY = 100000000 * COIN; //Max Money Supply
 static const int64 MAX_MINT_PROOF_OF_WORK = 50 * COIN; // Max Mint POW
 static const int64 MIN_TXOUT_AMOUNT = MIN_TX_FEE;
-static const int nProtocol6 = 9999999; //protocol 6 fork block
+static const int nProtocol6 = 1609500; //protocol 6 fork block
 
 inline bool MoneyRange(int64 nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 // Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp.
