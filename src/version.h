@@ -11,10 +11,10 @@
 // client versioning
 //
 
-#define DISPLAY_VERSION_MAJOR         
-#define DISPLAY_VERSION_MINOR        
-#define DISPLAY_VERSION_REVISION        
-#define DISPLAY_VERSION_BUILD         
+#define DISPLAY_VERSION_MAJOR         1
+#define DISPLAY_VERSION_MINOR        0
+#define DISPLAY_VERSION_REVISION    0
+#define DISPLAY_VERSION_BUILD         0
 
 #define APP_VERSION      
 #define APP_VERSION_RC   

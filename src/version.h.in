@@ -11,10 +11,10 @@
 // client versioning
 //
 
-#define DISPLAY_VERSION_MAJOR         $$replace(GIT_VERSION, "^v(\\d+)\\.(\\d+)\\.(\\d+).(\\d+)(-(.*))?$", "\\1")
-#define DISPLAY_VERSION_MINOR        $$replace(GIT_VERSION, "^v(\\d+)\\.(\\d+)\\.(\\d+).(\\d+)(-(.*))?$", "\\2")
-#define DISPLAY_VERSION_REVISION        $$replace(GIT_VERSION, "^v(\\d+)\\.(\\d+)\\.(\\d+).(\\d+)(-(.*))?$", "\\3")
-#define DISPLAY_VERSION_BUILD         $$replace(GIT_VERSION, "^v(\\d+)\\.(\\d+)\\.(\\d+).(\\d+)(-(.*))?$", "\\4")
+#define DISPLAY_VERSION_MAJOR         1
+#define DISPLAY_VERSION_MINOR        0
+#define DISPLAY_VERSION_REVISION    0
+#define DISPLAY_VERSION_BUILD         0
 
 #define APP_VERSION      $$replace(GIT_VERSION, "^v(\\d+)\\.(\\d+)\\.(\\d+).(\\d+)(-(.*))?$", "\"\\1.\\2.\\3.\\4\"")
 #define APP_VERSION_RC   $$replace(GIT_VERSION, "^v(\\d+)\\.(\\d+)\\.(\\d+).(\\d+)(-(.*))?$", "\\1,\\2,\\3,\\4")
