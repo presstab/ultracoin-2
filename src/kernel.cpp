@@ -17,7 +17,14 @@ extern int64 nRetargetUpdateStartV4;
 
 // Modifier interval: time to elapse before new modifier is computed
 // Set to 6-hour for production network and 20-minute for test network
-unsigned int nModifierInterval = MODIFIER_INTERVAL;
+
+unsigned int GetInterval(int nHeight)
+{
+	if(nHeight >= nProtocol6)
+		return MODIFIER_INTERVAL_FORK;
+	else
+		return MODIFIER_INTERVAL;
+}
 
 // Hard checkpoints of stake modifiers to ensure they are deterministic
 static std::map<int, unsigned int> mapStakeModifierCheckpoints =
@@ -45,7 +52,9 @@ int64 GetWeight(int64 nIntervalBeginning, int64 nIntervalEnd)
     // to secure the network when proof-of-stake difficulty is low
     //
     // Maximum TimeWeight is 90 days.
-
+	if(nIntervalEnd > nProtocol6Time)
+		return min(nIntervalEnd - nIntervalBeginning - nStakeMinAge2, (int64)nStakeMaxAge);
+	
     return min(nIntervalEnd - nIntervalBeginning - nStakeMinAge, (int64)nStakeMaxAge);
 }
 
@@ -67,7 +76,13 @@ static bool GetLastStakeModifier(const CBlockIndex* pindex, uint64& nStakeModifi
 static int64 GetStakeModifierSelectionIntervalSection(int nSection)
 {
     assert (nSection >= 0 && nSection < 64);
-    return (nModifierInterval * 63 / (63 + ((63 - nSection) * (MODIFIER_INTERVAL_RATIO - 1))));
+    return (MODIFIER_INTERVAL * 63 / (63 + ((63 - nSection) * (MODIFIER_INTERVAL_RATIO - 1))));
+}
+
+static int64 GetStakeModifierSelectionIntervalSection_fork(int nSection)
+{
+    assert (nSection >= 0 && nSection < 64);
+    return (MODIFIER_INTERVAL_FORK * 63 / (63 + ((63 - nSection) * (MODIFIER_INTERVAL_RATIO - 1))));
 }
 
 // Get stake modifier selection interval (in seconds)
@@ -76,6 +91,15 @@ static int64 GetStakeModifierSelectionInterval()
     int64 nSelectionInterval = 0;
     for (int nSection=0; nSection<64; nSection++)
         nSelectionInterval += GetStakeModifierSelectionIntervalSection(nSection);
+    return nSelectionInterval;
+}
+
+// Get stake modifier selection interval (in seconds)
+static int64 GetStakeModifierSelectionInterval_fork()
+{
+    int64 nSelectionInterval = 0;
+    for (int nSection=0; nSection<64; nSection++)
+        nSelectionInterval += GetStakeModifierSelectionIntervalSection_fork(nSection);
     return nSelectionInterval;
 }
 
@@ -159,19 +183,25 @@ bool ComputeNextStakeModifier(const CBlockIndex* pindexPrev, uint64& nStakeModif
     {
         printf("ComputeNextStakeModifier: prev modifier=0x%016" PRI64x " time=%s\n", nStakeModifier, DateTimeStrFormat(nModifierTime).c_str());
     }
-    if (nModifierTime / nModifierInterval >= pindexPrev->GetBlockTime() / nModifierInterval)
+    if (nModifierTime / GetInterval(pindexPrev->nHeight) >= pindexPrev->GetBlockTime() / GetInterval(pindexPrev->nHeight))
         return true;
 
     // Sort candidate blocks by timestamp
     vector<pair<int64, uint256> > vSortedByTimestamp;
     
     if (pindexPrev->nHeight >= nRetargetUpdateStartV3)
-        vSortedByTimestamp.reserve(64 * nModifierInterval / nStakeTargetSpacing2);
+        vSortedByTimestamp.reserve(64 * GetInterval(pindexPrev->nHeight) / nStakeTargetSpacing2);
     else
-        vSortedByTimestamp.reserve(64 * nModifierInterval / nStakeTargetSpacing);
+        vSortedByTimestamp.reserve(64 * GetInterval(pindexPrev->nHeight) / nStakeTargetSpacing);
 
-    int64 nSelectionInterval = GetStakeModifierSelectionInterval();
-    int64 nSelectionIntervalStart = (pindexPrev->GetBlockTime() / nModifierInterval) * nModifierInterval - nSelectionInterval;
+    int64 nSelectionInterval = 0;
+	
+	if(pindexPrev->nHeight >= nProtocol6)
+		nSelectionInterval = GetStakeModifierSelectionInterval_fork();
+	else
+		nSelectionInterval = GetStakeModifierSelectionInterval();
+	
+    int64 nSelectionIntervalStart = (pindexPrev->GetBlockTime() / GetInterval(pindexPrev->nHeight)) * GetInterval(pindexPrev->nHeight) - nSelectionInterval;
     const CBlockIndex* pindex = pindexPrev;
     while (pindex && pindex->GetBlockTime() >= nSelectionIntervalStart)
     {
@@ -189,7 +219,10 @@ bool ComputeNextStakeModifier(const CBlockIndex* pindexPrev, uint64& nStakeModif
     for (int nRound=0; nRound<min(64, (int)vSortedByTimestamp.size()); nRound++)
     {
         // add an interval section to the current selection round
-        nSelectionIntervalStop += GetStakeModifierSelectionIntervalSection(nRound);
+		if(pindexPrev->nHeight >= nProtocol6)
+			nSelectionIntervalStop += GetStakeModifierSelectionIntervalSection_fork(nRound);
+		else
+			nSelectionIntervalStop += GetStakeModifierSelectionIntervalSection(nRound);
         // select a block from the candidates of current round
         if (!SelectBlockFromCandidates(vSortedByTimestamp, mapSelectedBlocks, nSelectionIntervalStop, nStakeModifier, &pindex))
             return error("ComputeNextStakeModifier: unable to select block at round %d", nRound);
@@ -244,7 +277,12 @@ bool GetKernelStakeModifier(uint256 hashBlockFrom, uint64& nStakeModifier, int& 
     const CBlockIndex* pindexFrom = mapBlockIndex[hashBlockFrom];
     nStakeModifierHeight = pindexFrom->nHeight;
     nStakeModifierTime = pindexFrom->GetBlockTime();
-    int64 nStakeModifierSelectionInterval = GetStakeModifierSelectionInterval();
+    int64 nStakeModifierSelectionInterval = 0;
+	if(nStakeModifierTime >= nProtocol6Time - (24*60*60*3))
+		nStakeModifierSelectionInterval = GetStakeModifierSelectionInterval_fork();
+	else
+		nStakeModifierSelectionInterval = GetStakeModifierSelectionInterval();
+	
     const CBlockIndex* pindex = pindexFrom;
     // loop to find the stake modifier later by a selection interval
     while (nStakeModifierTime < pindexFrom->GetBlockTime() + nStakeModifierSelectionInterval)
@@ -375,11 +413,23 @@ bool stakeTargetHit(uint256 hashProofOfStake, unsigned int nAge, int64 nValueIn,
 	return (CBigNum(hashProofOfStake) < bnCoinDayWeight * bnTargetPerCoinDay);
 }
 
+//LiteStake test hash vs target
+bool stakeTargetHit_fork(uint256 hashProofOfStake, unsigned int nAge, int64 nValueIn, CBigNum bnTargetPerCoinDay)
+{	
+	//get the stake weight
+	int64 nTimeWeight = min((int64)nAge, (int64)nStakeMaxAge) - nStakeMinAge2;
+	CBigNum bnCoinDayWeight = CBigNum(nValueIn) * nTimeWeight / COIN / (24);
+	
+	// Now check if proof-of-stake hash meets target protocol
+	return (CBigNum(hashProofOfStake) < bnCoinDayWeight * bnTargetPerCoinDay);
+}
+
 //instead of looping outside and reinitializing variables many times, we will give a nTimeTx and also search interval so that we can do all the hashing here
 bool CheckStakeKernelHash(unsigned int nBits, const CBlock& blockFrom, unsigned int nTxPrevOffset, const CTransaction& txPrev, 
 	const COutPoint& prevout, unsigned int& nTimeTx, unsigned int nHashDrift, bool fCheck, uint256& hashProofOfStake, bool fPrintProofOfStake)
 {
-    //assign new variables to make it easier to read
+	//printf("*** ENTER checkstakekernelhash \n");
+  //assign new variables to make it easier to read
 	int64 nValueIn = txPrev.vout[prevout.n].nValue;
 	unsigned int nTxPrevTime = txPrev.nTime;
 	unsigned int nTimeBlockFrom = blockFrom.GetBlockTime();
@@ -387,7 +437,7 @@ bool CheckStakeKernelHash(unsigned int nBits, const CBlock& blockFrom, unsigned 
 	if (nTimeTx  < txPrev.nTime)  // Transaction timestamp violation
         return error("CheckStakeKernelHash() : nTime violation");
 	
-	if (nTimeBlockFrom + nStakeMinAge > nTimeTx) // Min age requirement
+	if (nTimeBlockFrom + nStakeMinAge2 > nTimeTx) // Min age requirement
 		return error("CheckStakeKernelHash() : min age violation");
 	
 	//grab difficulty
@@ -399,7 +449,10 @@ bool CheckStakeKernelHash(unsigned int nBits, const CBlock& blockFrom, unsigned 
 	int nStakeModifierHeight = 0;
 	int64 nStakeModifierTime = 0;
 	if (!GetKernelStakeModifier(blockFrom.GetHash(), nStakeModifier, nStakeModifierHeight, nStakeModifierTime, fPrintProofOfStake))
+	{
+		printf("*** CheckStakeKernelHash(): FAILED TO GET MODIFIER \n");
 		return false;
+	}
 		
 	//create data stream once instead of repeating it in the loop
 	CDataStream ss(SER_GETHASH, 0);
@@ -408,7 +461,11 @@ bool CheckStakeKernelHash(unsigned int nBits, const CBlock& blockFrom, unsigned 
 	//if wallet is simply checking to make sure a hash is valid
 	if(fCheck)
 	{
+		
 		hashProofOfStake = stakeHash(nTimeTx, nTxPrevTime, ss, prevout.n, nTxPrevOffset, nTimeBlockFrom); 
+		if(nTimeTx > nProtocol6Time)
+			return stakeTargetHit_fork(hashProofOfStake, (int64)nTimeTx - nTxPrevTime, nValueIn, bnTargetPerCoinDay);
+		
 		return stakeTargetHit(hashProofOfStake, (int64)nTimeTx - nTxPrevTime, nValueIn, bnTargetPerCoinDay);
 	}
 	
@@ -420,9 +477,17 @@ bool CheckStakeKernelHash(unsigned int nBits, const CBlock& blockFrom, unsigned 
         //hash this iteration
 		nTryTime = nTimeTx + nHashDrift - i;
 		hashProofOfStake = stakeHash(nTryTime, nTxPrevTime, ss, prevout.n, nTxPrevOffset, nTimeBlockFrom); 
+		
+		//printf("*** Stake Hash = %s \n", hashProofOfStake.ToString().c_str());
 
 		// if stake hash does not meet the target then continue to next iteration
-		if(!stakeTargetHit(hashProofOfStake, (int64)nTimeTx - nTxPrevTime, nValueIn, bnTargetPerCoinDay))
+		bool hit = false;
+		if(nTimeTx > nProtocol6Time)
+			hit = stakeTargetHit_fork(hashProofOfStake, (int64)nTimeTx - nTxPrevTime, nValueIn, bnTargetPerCoinDay);
+		else
+			hit = stakeTargetHit(hashProofOfStake, (int64)nTimeTx - nTxPrevTime, nValueIn, bnTargetPerCoinDay);
+		
+		if(!hit)
 			continue;
 		
 		fSuccess = true; // if we make it this far then we have successfully created a stake hash 

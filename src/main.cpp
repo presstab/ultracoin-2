@@ -39,6 +39,7 @@ static CBigNum bnProofOfStakeLimit(~uint256(0) >> 24);
 static CBigNum bnProofOfStakeHardLimit(~uint256(0) >> 30);
 static CBigNum bnInitialHashTarget(~uint256(0) >> 32);
 unsigned int nStakeMinAge = 60 * 60 * 24 * 7; // minimum age for coin age
+unsigned int nStakeMinAge2 = 60 * 5; // minimum age for coin age
 unsigned int nStakeMaxAge = 60 * 60 * 24 * 35; // stake age of full weight
 unsigned int nStakeTargetSpacing = 30; //  30 second stake spacing
 unsigned int nStakeTargetSpacing2 = 60; // 60 second stake spacing
@@ -3362,6 +3363,7 @@ bool LoadExternalBlockFile(FILE* fileIn)
     int64 nStart = GetTimeMillis();
 
     int nLoaded = 0;
+	int nStartHeight = nBestHeight;
     {
         LOCK(cs_main);
         try {
@@ -3400,11 +3402,22 @@ bool LoadExternalBlockFile(FILE* fileIn)
                 {
                     CBlock block;
                     blkdat >> block;
-                    if (ProcessBlock(NULL,&block))
-                    {
-                        nLoaded++;
-                        nPos += 4 + nSize;
-                    }
+                    // no reason to partially scan every block we have just to print to log that we have it
+					if(nLoaded < nStartHeight)
+					{
+						nLoaded++;
+						nPos += 4 + nSize;
+					}
+					else
+					{
+						std::string strErr = "";
+						bool fProcessed = ProcessBlock(NULL,&block);
+						if (fProcessed)
+						{
+							nLoaded++;
+							nPos += 4 + nSize;
+						}
+					}
                 }
             }
         }
@@ -5121,13 +5134,13 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
             scrypt_buffer_free(scratchbuf);
             return;
         }
-        while (vNodes.empty() || IsInitialBlockDownload()
-               || (fProofOfStake && vNodes.size() < 3 && nBestHeight < GetNumBlocksOfPeers()))
+        while (vNodes.empty())
         {
             Sleep(1000);
             if (fShutdown || ((!fGenerateBitcoins) && !fProofOfStake)) {
                 scrypt_buffer_free(scratchbuf);
-                return;
+                printf("*** generate bitcoins vnodes umpty \n");
+				return;
             }
         }
 
