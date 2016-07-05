@@ -2849,6 +2849,44 @@ CBigNum CBlockIndex::GetBlockTrust() const
         // what the hell?!
         return 0;
     }
+	//presstab - implementing new chain trust rules for protocol 6 fork
+	//instead of forcing PoW after PoS, simply make the score reduced
+	else if(nHeight >= nProtocol6)
+	{
+		// first block trust - for future compatibility (i.e., forks :P)
+        if (pprev == NULL)
+            return 1;
+		
+		bool fProofOfStake = IsProofOfStake();
+
+        // Same type of block 2 times in a row returns less trust
+        if (fProofOfStake && pprev->IsProofOfStake() || !fProofOfStake && pprev->IsProofOfWork())
+		{
+			CBigNum bnTrust;
+			if(fProofOfStake)
+				bnTrust = bnProofOfStakeLimit / bnTarget;
+			else 
+				bnTrust = bnProofOfWorkLimit / bnTarget;
+				
+			//reduce trust level for having two of the same types of blocks in a row - reduce it to 60% of normal
+			bnTrust *= 3 / 5;
+			
+			if(bnTrust > 1)
+				return pprev->GetBlockTrust() + bnTrust;
+			
+			return pprev->GetBlockTrust() + 1;
+		}
+
+        // PoS after PoW
+        if (IsProofOfStake())
+            return pprev->GetBlockTrust() + bnProofOfStakeLimit / bnTarget;
+
+        // PoW after PoS
+        if (IsProofOfWork()) 
+			return pprev->GetBlockTrust() + bnProofOfWorkLimit / bnTarget;
+
+        return 0;
+	}
 
     // old rules
     return (IsProofOfStake()? (CBigNum(1)<<256) / (bnTarget+1) : 1);
