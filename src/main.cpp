@@ -2821,7 +2821,6 @@ CBigNum CBlockIndex::GetBlockTrust() const
 	//instead of forcing PoW after PoS, simply make the score reduced
 	if(nHeight >= nProtocol6)
 	{
-		printf("*** new chain trust calc \n");
 		// first block trust - for future compatibility (i.e., forks :P)
         if (pprev == NULL)
             return 1;
@@ -2829,30 +2828,59 @@ CBigNum CBlockIndex::GetBlockTrust() const
 		bool fProofOfStake = IsProofOfStake();
 
         // Same type of block 2 times in a row returns less trust
-        if (fProofOfStake && pprev->IsProofOfStake() || !fProofOfStake && pprev->IsProofOfWork())
+        if ((fProofOfStake && pprev->IsProofOfStake()) || (!fProofOfStake && pprev->IsProofOfWork()))
 		{
 			CBigNum bnTrust;
+			int nTypeCount = 0;
 			if(fProofOfStake)
-				bnTrust = bnProofOfStakeLimit / bnTarget;
+			{
+				bnTrust = (CBigNum(1)<<256) / (bnTarget+1);
+				CBlockIndex* pTemp = pprev;
+				while(true)
+				{
+					if(pTemp->IsProofOfStake())
+					{
+						nTypeCount++;
+						pTemp = pTemp->pprev;
+					}
+					else
+						break;
+				}
+			}
 			else 
+			{
 				bnTrust = bnProofOfWorkLimit / bnTarget;
+				CBlockIndex* pTemp = pprev;
+				while(true)
+				{
+					if(pTemp->IsProofOfWork())
+					{
+						nTypeCount++;
+						pTemp = pTemp->pprev;
+					}
+					else
+						break;
+				}
+			}
 				
-			//reduce trust level for having two of the same types of blocks in a row - reduce it to 60% of normal
-			bnTrust *= 3 / 5;
+			//reduce trust level for having two of the same types of blocks in a row
+			bnTrust = bnTrust / (nTypeCount * 2);
+			
+			printf("*** block trust = %s \n", bnTrust.ToString().c_str());
 			
 			if(bnTrust > 1)
-				return pprev->GetBlockTrust() + bnTrust;
+				return bnTrust;
 			
-			return pprev->GetBlockTrust() + 1;
+			return 1;
 		}
 
         // PoS after PoW
         if (IsProofOfStake())
-            return pprev->GetBlockTrust() + bnProofOfStakeLimit / bnTarget;
+            return ((CBigNum(1)<<256) / (bnTarget+1)) * 2;
 
         // PoW after PoS
         if (IsProofOfWork()) 
-			return pprev->GetBlockTrust() + bnProofOfWorkLimit / bnTarget;
+			return (bnProofOfWorkLimit / bnTarget) * 2;
 
         return 0;
 	}
