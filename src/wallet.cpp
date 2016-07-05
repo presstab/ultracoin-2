@@ -1643,12 +1643,19 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     {
         uint64 nCoinAge;
         CTxDB txdb("r");
-		const CBlockIndex* pIndex0 = GetLastBlockIndex(pindexBest, false);
+		
+		//protocol 6 - probably better to use the last PoS block for the reward instead of the last PoW
+		bool fPoS = false; 
+		if(pindexBest->nHeight >= nProtocol6)
+			fPoS = true;
+		
+		const CBlockIndex* pIndexLast = GetLastBlockIndex(pindexBest, fPoS);
 
         if (!txNew.GetCoinAge(txdb, nCoinAge))
             return error("CreateCoinStake : failed to calculate coin age");
 		
-		nReward = GetProofOfStakeReward(nCoinAge, pIndex0->nHeight);
+		nReward = GetProofOfStakeReward(nCoinAge, pIndexLast->nHeight);
+		printf("CreateCoinStake(): Reward %s \n", FormatMoney(nReward).c_str());
         nCredit += nReward;
     }
 

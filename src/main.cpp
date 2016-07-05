@@ -2021,7 +2021,11 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs,
         {
             // coin stake tx earns reward instead of paying fee
             uint64 nCoinAge;
-            const CBlockIndex* pIndex0 = GetLastBlockIndex(pindexBest, false);
+			//protocol 6 - probably better to use the last PoS block for the reward instead of the last PoW
+			bool fPoS = false; 
+			if(pindexBest->nHeight >= nProtocol6)
+				fPoS = true;
+            const CBlockIndex* pIndex0 = GetLastBlockIndex(pindexBest, fPoS);
             if (!GetCoinAge(txdb, nCoinAge))
                 return error("ConnectInputs() : %s unable to get coin age for coinstake", GetHash().ToString().substr(0,10).c_str());
             int64 nStakeReward = GetValueOut() - nValueIn;
