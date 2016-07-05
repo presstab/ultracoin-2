@@ -2817,42 +2817,11 @@ CBigNum CBlockIndex::GetBlockTrust() const
     if (bnTarget <= 0)
         return 0;
 
-    // new trust rules
-    if (nHeight >= nConsecutiveStakeSwitchHeight) {
-        // first block trust - for future compatibility (i.e., forks :P)
-        if (pprev == NULL)
-            return 1;
-
-        // PoS after PoS? no trust for ya!
-        // (no need to explicitly disallow consecutive PoS
-        // blocks now as they won't get any trust anyway)
-        if (IsProofOfStake() && pprev->IsProofOfStake())
-            return 0;
-
-        // PoS after PoW? trust = prev_trust + 1!
-        if (IsProofOfStake() && pprev->IsProofOfWork())
-            return pprev->GetBlockTrust() + 1;
-
-        // PoW trust calculation
-        if (IsProofOfWork()) {
-            // set trust to the amount of work done in this block
-            CBigNum bnTrust = bnProofOfWorkLimit / bnTarget;
-
-            // double the trust if previous block was PoS
-            // (to prevent orphaning of PoS)
-            if (pprev->IsProofOfStake())
-                bnTrust *= 2;
-
-            return bnTrust;
-        }
-
-        // what the hell?!
-        return 0;
-    }
-	//presstab - implementing new chain trust rules for protocol 6 fork
+   //presstab - implementing new chain trust rules for protocol 6 fork
 	//instead of forcing PoW after PoS, simply make the score reduced
-	else if(nHeight >= nProtocol6)
+	if(nHeight >= nProtocol6)
 	{
+		printf("*** new chain trust calc \n");
 		// first block trust - for future compatibility (i.e., forks :P)
         if (pprev == NULL)
             return 1;
@@ -2887,6 +2856,38 @@ CBigNum CBlockIndex::GetBlockTrust() const
 
         return 0;
 	}
+    else if (nHeight >= nConsecutiveStakeSwitchHeight) {
+        // first block trust - for future compatibility (i.e., forks :P)
+        if (pprev == NULL)
+            return 1;
+
+        // PoS after PoS? no trust for ya!
+        // (no need to explicitly disallow consecutive PoS
+        // blocks now as they won't get any trust anyway)
+        if (IsProofOfStake() && pprev->IsProofOfStake())
+            return 0;
+
+        // PoS after PoW? trust = prev_trust + 1!
+        if (IsProofOfStake() && pprev->IsProofOfWork())
+            return pprev->GetBlockTrust() + 1;
+
+        // PoW trust calculation
+        if (IsProofOfWork()) {
+            // set trust to the amount of work done in this block
+            CBigNum bnTrust = bnProofOfWorkLimit / bnTarget;
+
+            // double the trust if previous block was PoS
+            // (to prevent orphaning of PoS)
+            if (pprev->IsProofOfStake())
+                bnTrust *= 2;
+
+            return bnTrust;
+        }
+
+        // what the hell?!
+        return 0;
+    }
+	
 
     // old rules
     return (IsProofOfStake()? (CBigNum(1)<<256) / (bnTarget+1) : 1);
