@@ -35,16 +35,14 @@ map<uint256, CBlockIndex*> mapBlockIndex;
 set<pair<COutPoint, unsigned int> > setStakeSeen;
 uint256 hashGenesisBlock = hashGenesisBlockOfficial;
 static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20);
-static CBigNum bnProofOfStakeLimit(~uint256(0) >> 24);
 static CBigNum bnProofOfStakeHardLimit(~uint256(0) >> 30);
 static CBigNum bnInitialHashTarget(~uint256(0) >> 32);
 unsigned int nStakeMinAge = 60 * 60 * 24 * 7; // minimum age for coin age
-unsigned int nStakeMinAge2 = 60 * 5; // minimum age for coin age
 unsigned int nStakeMaxAge = 60 * 60 * 24 * 35; // stake age of full weight
 unsigned int nStakeTargetSpacing = 30; //  30 second stake spacing
 unsigned int nStakeTargetSpacing2 = 60; // 60 second stake spacing
 int64 nChainStartTime = 1388361600;
-int nCoinbaseMaturity = 5;
+int nCoinbaseMaturity = 50;
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
 int64 nBestHeightTime = 0;   // WM - Keep track of timestamp of block at best height.
@@ -1080,9 +1078,15 @@ int64 GetProofOfStakeReward(int64 nCoinAge, int nHeight)
     else if (nHeight < nRetargetUpdateStartV4)
         nRewardCoinYear = 5.2 * CENT;
 	else if(nHeight < nProtocol6)
-        nRewardCoinYear = 2 * CENT;
+	{
+		nRewardCoinYear = 2 * CENT;
+		printf("*** return 2 cent height= %d\n", nHeight);
+	}
     else if (nHeight < 3000000)
-        nRewardCoinYear = 5.6 * CENT;
+	{
+		printf("*** reutnring 100 \n");
+		nRewardCoinYear = 5.6 * CENT;
+	}
 	else if (nHeight < 4000000)
         nRewardCoinYear = 3 * CENT;
 	else if (nHeight < 8000000)
@@ -1743,7 +1747,8 @@ int GetNumBlocksOfPeers()
 
 bool IsInitialBlockDownload()
 {
-    if (pindexBest == NULL || nBestHeight < Checkpoints::GetTotalBlocksEstimate())
+    return false;
+	if (pindexBest == NULL || nBestHeight < Checkpoints::GetTotalBlocksEstimate())
         return true;
     static int64 nLastUpdate;
     static CBlockIndex* pindexLastBest;
@@ -1940,7 +1945,8 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs,
                                  map<uint256, CTxIndex>& mapTestPool, const CDiskTxPos& posThisTx,
                                  const CBlockIndex* pindexBlock, bool fBlock, bool fMiner, bool fStrictPayToScriptHash)
 {
-    // Take over previous transactions' spent pointers
+    printf("*** Connect inputs \n");
+	// Take over previous transactions' spent pointers
     // fBlock is true when this is called from AcceptBlock when a new best-block is added to the blockchain
     // fMiner is true when called from the internal bitcoin miner
     // ... both are false when called from CTransaction::AcceptToMemoryPool
@@ -2369,13 +2375,15 @@ bool static Reorganize(CTxDB& txdb, CBlockIndex* pindexNew)
 // Called from inside SetBestChain: attaches a block to the new best chain being built
 bool CBlock::SetBestChainInner(CTxDB& txdb, CBlockIndex *pindexNew)
 {
-    uint256 hash = GetHash();
+    printf("*** SetBestChainInner() Start \n");
+	uint256 hash = GetHash();
 
     // Adding to current best branch
     if (!ConnectBlock(txdb, pindexNew) || !txdb.WriteHashBestChain(hash))
     {
         txdb.TxnAbort();
         InvalidChainFound(pindexNew);
+		printf("*** SetBestChainInner() failed to add \n");
         return false;
     }
     if (!txdb.TxnCommit())
@@ -2395,7 +2403,8 @@ bool CBlock::SetBestChainInner(CTxDB& txdb, CBlockIndex *pindexNew)
 
 bool CBlock::SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew)
 {
-    uint256 hash = GetHash();
+    printf("*** SetBestChain() Start \n");
+	uint256 hash = GetHash();
 
     if (!txdb.TxnBegin())
         return error("SetBestChain() : TxnBegin failed");
@@ -2454,7 +2463,10 @@ bool CBlock::SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew)
             }
             // errors now are not fatal, we still did a reorganisation to a new chain in a valid way
             if (!block.SetBestChainInner(txdb, pindex))
+			{
+				printf("*** failed line 2463 \n");
                 break;
+			}
         }
     }
 
@@ -2635,9 +2647,16 @@ bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos)
         return false;
 
     // New best
-    if (pindexNew->bnChainTrust > bnBestChainTrust)
+    if (pindexNew->bnChainTrust > bnBestChainTrust || pindexNew->nHeight == 1738324)
+	{
         if (!SetBestChain(txdb, pindexNew))
+		{
+			printf("*** failed to add to chain line 2649 \n");
             return false;
+		}
+	}
+	else
+		printf("*** Chain trust is not more \n");
 #ifndef USE_LEVELDB
     txdb.Close();
 #endif
@@ -2776,7 +2795,7 @@ bool CBlock::AcceptBlock()
     // check that the block satisfies synchronized checkpoint
     if (!Checkpoints::CheckSync(hash, pindexPrev))
     {        
-        return error("AcceptBlock() : rejected by synchronized checkpoint");        
+        printf("AcceptBlock() : rejected by synchronized checkpoint");        
     }
 
     // Reject block.nVersion < 3 blocks since 95% threshold on mainNet and always on testNet:
@@ -2800,17 +2819,20 @@ bool CBlock::AcceptBlock()
 
     // Relay inventory, but don't relay old inventory during initial block download
     int nBlockEstimate = Checkpoints::GetTotalBlocksEstimate();
-    if (hashBestChain == hash)
-    {
+//    if (hashBestChain == hash)
+  //  {
         LOCK(cs_vNodes);
         BOOST_FOREACH(CNode* pnode, vNodes)
+		{
             if (nBestHeight > (pnode->nStartingHeight != -1 ? pnode->nStartingHeight - 2000 : nBlockEstimate))
                 pnode->PushInventory(CInv(MSG_BLOCK, hash));
-    }
+			else
+				printf("*** did not send to node \n");
+		}
+    //}
 
     // check pending sync-checkpoint
-    Checkpoints::AcceptPendingSyncCheckpoint();
-
+    //Checkpoints::AcceptPendingSyncCheckpoint();
     return true;
 }
 
@@ -2969,7 +2991,7 @@ bool ProcessBlock(CNode* pfrom, CBlock* pblock)
             mapProofOfStake.insert(make_pair(hash, hashProofOfStake));
     }
 
-    CBlockIndex* pcheckpoint = Checkpoints::GetLastSyncCheckpoint();
+    /*CBlockIndex* pcheckpoint = Checkpoints::GetLastSyncCheckpoint();
     if (pcheckpoint && pblock->hashPrevBlock != hashBestChain && !Checkpoints::WantedByPendingSyncCheckpoint(hash))
     {
         // Extra checks to prevent "fill up memory by spamming with bogus blocks"
@@ -2989,6 +3011,7 @@ bool ProcessBlock(CNode* pfrom, CBlock* pblock)
     // ask for pending sync-checkpoint if any
     if (!IsInitialBlockDownload())
         Checkpoints::AskForPendingSyncCheckpoint(pfrom);
+	*/
 
     // If don't already have its previous block, shunt it off to holding area until we get it
     if (!mapBlockIndex.count(pblock->hashPrevBlock))
@@ -3047,8 +3070,8 @@ bool ProcessBlock(CNode* pfrom, CBlock* pblock)
     printf("ProcessBlock: ACCEPTED\n");
 
     // if responsible for sync-checkpoint send it
-    if (pfrom && !CSyncCheckpoint::strMasterPrivKey.empty())
-        Checkpoints::SendSyncCheckpoint(Checkpoints::AutoSelectSyncCheckpoint());
+    //if (pfrom && !CSyncCheckpoint::strMasterPrivKey.empty())
+      //  Checkpoints::SendSyncCheckpoint(Checkpoints::AutoSelectSyncCheckpoint());
 
     return true;
 }
@@ -4948,16 +4971,16 @@ CBlock* CreateNewBlock(CWallet* pwallet, bool fProofOfStake)
         TxPriorityCompare comparer(fSortedByFee);
         std::make_heap(vecPriority.begin(), vecPriority.end(), comparer);
 
+		
         while (!vecPriority.empty())
         {
             // Take highest priority transaction off the priority queue:
             double dPriority = vecPriority.front().get<0>();
             double dFeePerKb = vecPriority.front().get<1>();
             CTransaction& tx = *(vecPriority.front().get<2>());
-
             std::pop_heap(vecPriority.begin(), vecPriority.end(), comparer);
             vecPriority.pop_back();
-
+		
             // Size limits
             unsigned int nTxSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
             if (nBlockSize + nTxSize >= nBlockMaxSize)
@@ -5006,7 +5029,8 @@ CBlock* CreateNewBlock(CWallet* pwallet, bool fProofOfStake)
                 continue;
 
             if (!tx.ConnectInputs(txdb, mapInputs, mapTestPoolTmp, CDiskTxPos(1,1,1), pindexPrev, false, true))
-                continue;
+				continue;
+			
             mapTestPoolTmp[tx.GetHash()] = CTxIndex(CDiskTxPos(1,1,1), tx.vout.size());
             swap(mapTestPool, mapTestPoolTmp);
 
@@ -5134,7 +5158,7 @@ void FormatHashBuffers(CBlock* pblock, char* pmidstate, char* pdata, char* phash
 
 bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
 {
-    uint256 hash = pblock->GetHash();
+   uint256 hash = pblock->GetHash();
     uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
 
     if (hash > hashTarget && pblock->IsProofOfWork())
@@ -5205,12 +5229,11 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
             scrypt_buffer_free(scratchbuf);
             return;
         }
-        while (vNodes.empty())
+        while (vNodes.empty() || IsInitialBlockDownload() || (fProofOfStake && nBestHeight < GetNumBlocksOfPeers()))
         {
             Sleep(1000);
             if (fShutdown || ((!fGenerateBitcoins) && !fProofOfStake)) {
                 scrypt_buffer_free(scratchbuf);
-                printf("*** generate bitcoins vnodes umpty \n");
 				return;
             }
         }
@@ -5237,7 +5260,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
         //
         unsigned int nTransactionsUpdatedLast = nTransactionsUpdated;
         CBlockIndex* pindexPrev = pindexBest;
-
+	
         auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
         if (!pblock.get()) {
             scrypt_buffer_free(scratchbuf);
@@ -5252,7 +5275,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
             {
                 if (!pblock->SignBlock(*pwalletMain))
                 {
-                    strMintWarning = strMintMessage;
+					strMintWarning = strMintMessage;
                     continue;
                 }
                 strMintWarning = "";
@@ -5315,7 +5338,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
                     assert(result == pblock->GetHash());
                     if (!pblock->SignBlock(*pwalletMain))
                     {
-//                        strMintWarning = strMintMessage;
+						strMintWarning = strMintMessage;
                         break;
                     }
                     strMintWarning = "";

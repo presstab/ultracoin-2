@@ -883,7 +883,7 @@ void CWalletTx::RelayWalletTransaction(CTxDB& txdb)
 {
     BOOST_FOREACH(const CMerkleTx& tx, vtxPrev)
     {
-        if (!(tx.IsCoinBase() || tx.IsCoinStake()) && !tx.vin.empty())
+        if (!(tx.IsCoinBase() || tx.IsCoinStake()))
         {
             uint256 hash = tx.GetHash();
             if (!txdb.ContainsTx(hash))
@@ -1242,7 +1242,7 @@ bool CWallet::SelectStakeCoins(std::set<std::pair<const CWalletTx*,unsigned int>
 	{
 		if(nAmountSelected + out.tx->vout[out.i].nValue < nTargetAmount)
 		{
-			if(GetAdjustedTime() - out.tx->GetTxTime() > nStakeMinAge2)
+			if(GetAdjustedTime() - out.tx->GetTxTime() > nStakeMinAge)
 			{
 				setCoins.insert(make_pair(out.tx, out.i));
 				nAmountSelected += out.tx->vout[out.i].nValue;
@@ -1266,7 +1266,7 @@ bool CWallet::MintableCoins()
 	
 	BOOST_FOREACH(const COutput& out, vCoins)
 	{
-		if(GetAdjustedTime() - out.tx->GetTxTime() > nStakeMinAge2)
+		if(GetAdjustedTime() - out.tx->GetTxTime() > nStakeMinAge)
 			return true;
 	}	
 	
@@ -1511,17 +1511,16 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
 	static std::set<pair<const CWalletTx*,unsigned int> > setStakeCoins;
 	static int nLastStakeSetUpdate = 0;
 
-
+	if(GetTime() - nLastStakeSetUpdate > nStakeSetUpdateTime)
+	{
 		setStakeCoins.clear();
-		SelectStakeCoins(setStakeCoins, nBalance - nReserveBalance);
+		if (!SelectStakeCoins(setStakeCoins, nBalance - nReserveBalance))
+			return false;
 		nLastStakeSetUpdate = GetTime();
-
+	}
 	
 	if (setStakeCoins.empty())
-	{
-		printf("*** stakeset empty \n");
         return false;
-	}
 	
 	vector<const CWalletTx*> vwtxPrev;
 	
@@ -2382,7 +2381,7 @@ bool CWallet::GetStakeWeight(const CKeyStore& keystore, uint64& nMinWeight, uint
     set<pair<const CWalletTx*,unsigned int> > setCoins;
     int64 nValueIn = 0;
 
-    if (!SelectCoinsSimple(nBalance - nReserveBalance, GetTime(), 1, setCoins, nValueIn))
+    if (!SelectCoinsSimple(nBalance - nReserveBalance, GetTime(), nCoinbaseMaturity * 10, setCoins, nValueIn))
         return false;
 
     if (setCoins.empty())
@@ -2404,8 +2403,6 @@ bool CWallet::GetStakeWeight(const CKeyStore& keystore, uint64& nMinWeight, uint
 
         int64 nTimeWeight = GetWeight((int64)pcoin.first->nTime, (int64)GetTime());
         CBigNum bnCoinDayWeight = CBigNum(pcoin.first->vout[pcoin.second].nValue) * nTimeWeight / COIN / (24 * 60 * 60);
-		
-		//printf("** WEIGHT IS %s", bnCoinDayWeight.ToString().c_str());
 		
         // Weight is greater than zero
         if (nTimeWeight > 0)
