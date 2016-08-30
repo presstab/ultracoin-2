@@ -24,7 +24,55 @@
 using namespace std;
 using namespace boost;
 
-static const int MAX_OUTBOUND_CONNECTIONS = 32;
+// static const int MAX_OUTBOUND_CONNECTIONS = 32;
+
+// Make configurable connections as it set at init.cpp
+// -maxconnections=<n> "Maintain at most <n> connections to peers (default: 125)" See init.cpp
+#define DEFAULT_MAX_CONNECTIONS         125	// Default value for -maxconnections=<n>
+#define MIN_CONNECTIONS                 8	// Lowest value we allow for -maxconnections=<n> (never set less than 2)
+#define MAX_CONNECTIONS                 256	// Max allowed value for -maxconnections=<n>
+
+// -maxoutbound=<n> "Maintain at most <n> outbound connections to peers (default: 8)" See init.cpp
+#define DEFAULT_OUTBOUND_CONNECTIONS    8	// default: 8 outbound connections for -maxoutbound=<n>
+#define MIN_OUTBOUND_CONNECTIONS        4	// Lowest we allow for -maxoutbound=<n> shall be 4 connections (never set below 2)
+#define MAX_OUTBOUND_CONNECTIONS        64	// Outbound connections count is runtime configurable now..
+
+// Function to determine maximum allowed in+out connections
+// Returns: Maximum connections allowed (int)
+int GetMaxCs()
+{
+    int c;
+    c = GetArg("-maxconnections", DEFAULT_MAX_CONNECTIONS);
+    
+    // Ensure safe amount the max connection count
+    c = max(c, MIN_CONNECTIONS);
+    c = min(c, MAX_CONNECTIONS);
+
+    return c;
+}
+
+// Function to determine maximum allowed outbound connections
+// Returns: Maximum outbound connections allowed (int)
+int GetMaxOCs()
+{
+    int c;
+    c = GetArg("-maxoutbound", DEFAULT_OUTBOUND_CONNECTIONS);
+    
+    // Checking for low and high boundaries
+    c = max(c, MIN_OUTBOUND_CONNECTIONS);
+    c = min(c, MAX_OUTBOUND_CONNECTIONS);
+    c = min(c, GetMaxCs());
+    
+    return c;
+}
+
+// Function to determine maximum allowed inbound connections
+// Returns: Maximum inbound connections allowed (int)
+int GetMaxICs()
+{
+    return GetMaxCs() - GetMaxOCs();
+}
+
 
 void ThreadMessageHandler2(void* parg);
 void ThreadSocketHandler2(void* parg);
@@ -811,8 +859,9 @@ void ThreadSocketHandler2(void* parg)
                 if (nErr != WSAEWOULDBLOCK)
                     printf("socket error accept failed: %d\n", nErr);
             }
-            else if (nInbound >= GetArg("-maxconnections", 125) - MAX_OUTBOUND_CONNECTIONS)
+            else if (nInbound > GetMaxICs())
             {
+                printf("no more inbound connections are allowed\n");
                 closesocket(hSocket);
             }
             else if (CNode::IsBanned(addr))
@@ -1841,8 +1890,7 @@ void StartNode(void* parg)
 
     if (semOutbound == NULL) {
         // initialize semaphore
-        int nMaxOutbound = min(MAX_OUTBOUND_CONNECTIONS, (int)GetArg("-maxconnections", 125));
-        semOutbound = new CSemaphore(nMaxOutbound);
+        semOutbound = new CSemaphore(GetMaxOCs());
     }
 
     if (pnodeLocalHost == NULL)
@@ -1906,8 +1954,9 @@ bool StopNode()
     fShutdown = true;
     nTransactionsUpdated++;
     int64 nStart = GetTime();
+    int nMaxOCs = GetMaxOCs();
     if (semOutbound)
-        for (int i=0; i<MAX_OUTBOUND_CONNECTIONS; i++)
+        for (int i=0; i<nMaxOCs; i++)
             semOutbound->post();
     do
     {
