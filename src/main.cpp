@@ -2864,7 +2864,10 @@ CBigNum CBlockIndex::GetBlockTrust() const
 				CBlockIndex* pTemp = pprev;
 				while(true)
 				{
-					if(pTemp->IsProofOfStake())
+                    if(nTypeCount > 3)
+                        break;
+
+                    if(pTemp->IsProofOfStake())
 					{
 						nTypeCount++;
 						pTemp = pTemp->pprev;
@@ -2877,9 +2880,12 @@ CBigNum CBlockIndex::GetBlockTrust() const
 			{
 				bnTrust = bnProofOfWorkLimit / bnTarget;
 				CBlockIndex* pTemp = pprev;
-				while(true)
+                while(true)
 				{
-					if(pTemp->IsProofOfWork())
+                    if(nTypeCount > 3)
+                        break;
+
+                    if(pTemp->IsProofOfWork())
 					{
 						nTypeCount++;
 						pTemp = pTemp->pprev;
@@ -2889,8 +2895,8 @@ CBigNum CBlockIndex::GetBlockTrust() const
 				}
 			}
 				
-			//reduce trust level for having two of the same types of blocks in a row
-			bnTrust = bnTrust / (nTypeCount * 2);
+            //reduce trust level for having two of the same types of blocks in a row - maximum discount over 5 blocks
+            bnTrust = bnTrust / (min(nTypeCount, 3) * 2);
 			
 			printf("*** block trust = %s \n", bnTrust.ToString().c_str());
 			
