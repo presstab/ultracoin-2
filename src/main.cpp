@@ -1078,15 +1078,9 @@ int64 GetProofOfStakeReward(int64 nCoinAge, int nHeight)
     else if (nHeight < nRetargetUpdateStartV4)
         nRewardCoinYear = 5.2 * CENT;
 	else if(nHeight < nProtocol6)
-	{
 		nRewardCoinYear = 2 * CENT;
-		printf("*** return 2 cent height= %d\n", nHeight);
-	}
     else if (nHeight < 3000000)
-	{
-		printf("*** reutnring 100 \n");
 		nRewardCoinYear = 5.6 * CENT;
-	}
 	else if (nHeight < 4000000)
         nRewardCoinYear = 3 * CENT;
 	else if (nHeight < 8000000)
@@ -1945,7 +1939,6 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs,
                                  map<uint256, CTxIndex>& mapTestPool, const CDiskTxPos& posThisTx,
                                  const CBlockIndex* pindexBlock, bool fBlock, bool fMiner, bool fStrictPayToScriptHash)
 {
-    printf("*** Connect inputs \n");
 	// Take over previous transactions' spent pointers
     // fBlock is true when this is called from AcceptBlock when a new best-block is added to the blockchain
     // fMiner is true when called from the internal bitcoin miner
@@ -2375,7 +2368,6 @@ bool static Reorganize(CTxDB& txdb, CBlockIndex* pindexNew)
 // Called from inside SetBestChain: attaches a block to the new best chain being built
 bool CBlock::SetBestChainInner(CTxDB& txdb, CBlockIndex *pindexNew)
 {
-    printf("*** SetBestChainInner() Start \n");
 	uint256 hash = GetHash();
 
     // Adding to current best branch
@@ -2383,7 +2375,6 @@ bool CBlock::SetBestChainInner(CTxDB& txdb, CBlockIndex *pindexNew)
     {
         txdb.TxnAbort();
         InvalidChainFound(pindexNew);
-		printf("*** SetBestChainInner() failed to add \n");
         return false;
     }
     if (!txdb.TxnCommit())
@@ -2403,7 +2394,6 @@ bool CBlock::SetBestChainInner(CTxDB& txdb, CBlockIndex *pindexNew)
 
 bool CBlock::SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew)
 {
-    printf("*** SetBestChain() Start \n");
 	uint256 hash = GetHash();
 
     if (!txdb.TxnBegin())
@@ -2464,7 +2454,6 @@ bool CBlock::SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew)
             // errors now are not fatal, we still did a reorganisation to a new chain in a valid way
             if (!block.SetBestChainInner(txdb, pindex))
 			{
-				printf("*** failed line 2463 \n");
                 break;
 			}
         }
@@ -2651,12 +2640,10 @@ bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos)
 	{
         if (!SetBestChain(txdb, pindexNew))
 		{
-			printf("*** failed to add to chain line 2649 \n");
             return false;
 		}
 	}
 	else
-		printf("*** Chain trust is not more \n");
 #ifndef USE_LEVELDB
     txdb.Close();
 #endif
@@ -2826,8 +2813,6 @@ bool CBlock::AcceptBlock()
 		{
             if (nBestHeight > (pnode->nStartingHeight != -1 ? pnode->nStartingHeight - 2000 : nBlockEstimate))
                 pnode->PushInventory(CInv(MSG_BLOCK, hash));
-			else
-				printf("*** did not send to node \n");
 		}
     //}
 
@@ -2897,8 +2882,6 @@ CBigNum CBlockIndex::GetBlockTrust() const
 				
             //reduce trust level for having two of the same types of blocks in a row - maximum discount over 5 blocks
             bnTrust = bnTrust / (min(nTypeCount, 3) * 2);
-			
-			printf("*** block trust = %s \n", bnTrust.ToString().c_str());
 			
 			if(bnTrust > 1)
 				return bnTrust;
